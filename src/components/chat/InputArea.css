@@ -1,0 +1,46 @@
+.input-area {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  background-color: white;
+  border-top: 1px solid #e5e5ea;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.input-area button {
+  padding: 12px 24px;
+  background-color: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.input-area button:hover {
+  background-color: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .input-area {
+    padding: 15px;
+    gap: 8px;
+  }
+
+  .input-area input {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .input-area button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+} 

@@ -1,0 +1,32 @@
+.main-screen {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f7f7f8;
+}
+
+.main-content {
+  width: 100%;
+  max-width: 1200px;
+  padding: 40px;
+  text-align: center;
+}
+
+.main-content h1 {
+  margin-bottom: 40px;
+  color: #333;
+  font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 20px;
+  }
+
+  .main-content h1 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+} 
