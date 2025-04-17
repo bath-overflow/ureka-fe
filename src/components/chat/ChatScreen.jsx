@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import MessageList from './MessageList';
-import InputArea from './InputArea';
-import FileUpload from '../common/FileUpload';
+import FileUploadSection from './FileUploadSection';
+import ChatArea from './ChatArea';
 import useChatSocket from '../../hooks/useChatSocket';
 import useNoteApi from '../../hooks/useNoteApi';
 import './ChatScreen.css';
@@ -35,26 +34,18 @@ const ChatScreen = ({ selectedNote, onBack }) => {
 
   return (
     <div className="chat-screen">
-      <div className="file-upload-container">
-        <div className="note-header">
-          <button onClick={onBack} className="back-button">
-            ←
-          </button>
-          <h2>{selectedNote.name}</h2>
-        </div>
-        <FileUpload onFileUpload={handleFileUpload} />
-        {loading && <div className="loading">Uploading...</div>}
-        {error && <div className="error">{error}</div>}
-        {uploadedFile && (
-          <div className="uploaded-file-info">
-            <p>Uploaded: {uploadedFile.name}</p>
-          </div>
-        )}
-      </div>
-      <div className="chat-area">
-        <MessageList messages={messages} />
-        <InputArea onSendMessage={handleSendMessage} />
-      </div>
+      <FileUploadSection
+        noteName={selectedNote.name}
+        onBack={onBack}
+        onFileUpload={handleFileUpload}
+        uploadedFile={uploadedFile}
+        loading={loading}
+        error={error}
+      />
+      <ChatArea
+        messages={messages}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 };

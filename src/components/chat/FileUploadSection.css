@@ -1,13 +1,4 @@
-.chat-container {
-  display: flex;
-  height: 100vh;
-  max-width: 1400px;
-  width: 95%;
-  margin: 0 auto;
-  background-color: #f7f7f8;
-}
-
-.file-upload-container {
+.file-upload-section {
   width: 30%;
   min-width: 300px;
   border-right: 1px solid #e5e5ea;
@@ -45,20 +36,8 @@
   background-color: rgba(0, 122, 255, 0.1);
 }
 
-.chat-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
 @media (max-width: 768px) {
-  .chat-container {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .file-upload-container {
+  .file-upload-section {
     width: 100%;
     min-width: auto;
     border-right: none;
