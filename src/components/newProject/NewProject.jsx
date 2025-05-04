@@ -1,53 +1,34 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
+import SourceUploadModal from "../common/SourceUploadModal";
 import "./NewProject.css";
 
 function NewProject() {
-    const [files, setFiles] = useState([]);
-    const fileInputRef = useRef();
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [step, setStep] = useState(0); // 0: 소스 업로드, 1: 프로젝트 정보 입력
 
-    const handleFileChange = (e) => {
-        setFiles(Array.from(e.target.files));
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setFiles(Array.from(e.dataTransfer.files));
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
+    const handleUploadComplete = (files) => {
+        setUploadedFiles(files);
+        setStep(1);
     };
 
     return (
-        <div className="new-project-bg">
-            <div className="new-project-modal">
-                <button className="close-btn" /* onClick={...} */>×</button>
-                <h1>소스 추가</h1>
-                <div className="desc">소스를 추가하면...(설명)</div>
-                <div
-                    className="upload-area"
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onClick={() => fileInputRef.current.click()}
-                >
-                    <div className="upload-icon">⬆️</div>
-                    <div>파일을 선택하거나 드래그앤 드롭</div>
-                    <input
-                        type="file"
-                        multiple
-                        ref={fileInputRef}
-                        style={{ display: "none" }}
-                        onChange={handleFileChange}
-                        accept=".pdf"
-                    />
+        <>
+            {step === 0 && (
+                <SourceUploadModal onUploadComplete={handleUploadComplete} />
+            )}
+            {step === 1 && (
+                <div className="new-project-bg">
+                    <div className="new-project-modal">
+                        <h1>프로젝트 정보 입력</h1>
+                        <div className="desc">여기에 프로젝트 정보 입력 폼 등...</div>
+                        <div className="file-count">
+                            업로드한 소스: {uploadedFiles.length}개
+                        </div>
+                        {/* 프로젝트 생성 폼 등 추가 */}
+                    </div>
                 </div>
-                <div className="divider" />
-                <div className="file-count">
-                    현재 업로드한 소스: {files.length}개
-                </div>
-                <button className="done-btn">Done</button>
-            </div>
-        </div>
+            )}
+        </>
     );
 }
 
