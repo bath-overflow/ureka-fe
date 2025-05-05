@@ -101,7 +101,7 @@ function MainScreen({ projects, setProjects }) {
                 className="project-info"
                 onClick={e => {
                   e.preventDefault();
-                  navigate(`/project/${p.id}`);
+                  navigate(`/chat/project/${p.id}`);
                 }}
               >
                 More Info →
