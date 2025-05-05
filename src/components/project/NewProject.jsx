@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import SourceUploadModal from "../common/SourceUploadModal";
+import SourceUploadModal from "./SourceUploadModal";
 import "./NewProject.css";
 
 function NewProject() {

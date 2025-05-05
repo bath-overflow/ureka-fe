@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
 import MainScreen from "./components/main/MainScreen";
-import NewProject from "./components/newProject/NewProject";
+import NewProject from "./components/project/NewProject";
 import ProjectDetail from "./components/main/ProjectDetail";
 import './App.css';
 
