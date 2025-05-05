@@ -37,6 +37,7 @@ function App() {
         <Route path="/main" element={<MainScreen projects={projects} setProjects={setProjects} />} />
         <Route path="/new-project" element={<NewProject />} />
         <Route path="/project/:id" element={<ProjectDetail />} />
+        <Route path="/mainScreen" element={<MainScreen />} />
       </Routes>
     </BrowserRouter>
   );
