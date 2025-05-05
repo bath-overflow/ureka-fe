@@ -1,0 +1,73 @@
+.new-project-bg {
+    min-height: 100vh;
+    background: #f4f6fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-project-modal {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+    padding: 48px 40px 32px 40px;
+    width: 480px;
+    position: relative;
+    text-align: center;
+}
+
+.close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.upload-area {
+    border: 2px dashed #bfc7d1;
+    border-radius: 8px;
+    padding: 32px 0;
+    margin: 32px 0 16px 0;
+    cursor: pointer;
+    color: #888;
+    background: #f8fafc;
+    transition: border 0.2s;
+}
+
+.upload-area:hover {
+    border-color: #2563eb;
+}
+
+.upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.divider {
+    border-top: 1px solid #e5e7eb;
+    margin: 24px 0 12px 0;
+}
+
+.file-count {
+    color: #2563eb;
+    margin-bottom: 24px;
+}
+
+.done-btn {
+    border: 1.5px solid #2563eb;
+    background: #fff;
+    color: #2563eb;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.done-btn:hover {
+    background: #2563eb;
+    color: #fff;
+}

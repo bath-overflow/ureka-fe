@@ -1,8 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import logo from "../../assets/example_image.png";
 
 function Login() {
+    const navigate = useNavigate();
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        navigate("/main");
+    };
+
     return (
         <div className="login-background">
             <div className="login-container">
@@ -11,7 +19,7 @@ function Login() {
                 </div>
                 <div className="login-form">
                     <h2>Log In</h2>
-                    <form>
+                    <form onSubmit={handleSubmit}>
                         <input type="text" placeholder="Email Address" />
                         <button type="submit">Log In</button>
                     </form>
