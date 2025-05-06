@@ -1,45 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
+import { useChat } from "../../hooks/useChat";
 import "./ChatScreen.css";
 
 function ChatScreen({ projects }) {
   const { id } = useParams();
   const project = projects.find(p => String(p.id) === String(id));
+  const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
+  const [input, setInput] = useState("");
 
   // project가 없으면 안내 메시지
   if (!project) {
     return <div style={{ padding: 40 }}>존재하지 않는 프로젝트입니다.</div>;
   }
 
-  // 프로젝트별 메시지 상태를 localStorage에 저장/불러오기 (선택)
-  const storageKey = `chat-messages-project-${id}`;
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem(storageKey);
-    return saved
-      ? JSON.parse(saved)
-      : [{ id: 1, text: "UREKA와 자유롭게 대화해보세요!", sender: "system" }];
-  });
-  const [input, setInput] = useState("");
-
-  // 메시지 변경 시 localStorage에 저장 (선택)
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(messages));
-  }, [messages, storageKey]);
-
   const handleSend = () => {
-    if (input.trim() === "") return;
-    const userMsg = {
-      id: messages.length + 1,
-      text: input,
-      sender: "user"
-    };
-    const botMsg = {
-      id: messages.length + 2,
-      text: input, // 에코: 사용자가 보낸 메시지 그대로
-      sender: "bot"
-    };
-    setMessages([...messages, userMsg, botMsg]);
+    sendMessage(input);
     setInput("");
   };
 
@@ -66,15 +43,16 @@ function ChatScreen({ projects }) {
   };
 
   const handleHint = () => {
-    setMessages([
-      ...messages,
-      {
-        id: messages.length + 1,
-        text: "이건 힌트야", // 원하는 힌트 메시지로 변경
-        sender: "bot"
-      }
-    ]);
+    sendHint();
   };
+
+  if (isLoading) {
+    return <div style={{ padding: 40 }}>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div style={{ padding: 40 }}>에러가 발생했습니다: {error}</div>;
+  }
 
   return (
     <div className="chat-root">
@@ -95,7 +73,6 @@ function ChatScreen({ projects }) {
               {projectTitle}
               <span
                 className="edit-icon"
-                style={{ marginLeft: 8, fontSize: "1rem", color: "#888", cursor: "pointer" }}
                 onClick={handleEdit}
                 tabIndex={0}
                 role="button"
