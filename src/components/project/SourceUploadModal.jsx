@@ -1,27 +1,43 @@
-import React, { useRef, useState } from "react";
-import "./NewProject.css";
+import React, { useRef, useState } from 'react';
+import './SourceUploadModal.css';
 
-function NewProject() {
+const SourceUploadModal = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
     const fileInputRef = useRef();
 
     const handleFileChange = (e) => {
-        setFiles(Array.from(e.target.files));
+        const newFiles = Array.from(e.target.files);
+        setFiles(prev => [
+            ...prev,
+            ...newFiles.filter(
+                file => !prev.some(f => f.name === file.name && f.size === file.size)
+            )
+        ]);
     };
 
     const handleDrop = (e) => {
         e.preventDefault();
-        setFiles(Array.from(e.dataTransfer.files));
+        const newFiles = Array.from(e.dataTransfer.files);
+        setFiles(prev => [
+            ...prev,
+            ...newFiles.filter(
+                file => !prev.some(f => f.name === file.name && f.size === file.size)
+            )
+        ]);
     };
 
     const handleDragOver = (e) => {
         e.preventDefault();
     };
 
+    const handleDone = () => {
+        if (onUploadComplete) onUploadComplete(files);
+        setFiles([]);
+    };
+
     return (
         <div className="new-project-bg">
             <div className="new-project-modal">
-                <button className="close-btn" /* onClick={...} */>×</button>
                 <h1>소스 추가</h1>
                 <div className="desc">소스를 추가하면...(설명)</div>
                 <div
@@ -43,12 +59,19 @@ function NewProject() {
                 </div>
                 <div className="divider" />
                 <div className="file-count">
-                    현재 업로드한 소스: {files.length}개
+                    <span style={{ color: "#2563eb" }}>현재 업로드한 소스: {files.length}개</span>
                 </div>
-                <button className="done-btn">Done</button>
+                {files.length > 0 && (
+                    <ul className="file-list">
+                        {files.map((file, idx) => (
+                            <li key={idx}>{file.name}</li>
+                        ))}
+                    </ul>
+                )}
+                <button className="done-btn" onClick={handleDone}>Done</button>
             </div>
         </div>
     );
-}
+};
 
-export default NewProject;
+export default SourceUploadModal;
