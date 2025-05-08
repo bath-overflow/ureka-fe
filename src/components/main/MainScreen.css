@@ -1,10 +1,21 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  /* 또는 unset */
+}
+
 .main-bg {
-  min-height: 100vh;
+  height: 100vh;
   background: #f7f9fb;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 40px 0;
+  overflow-y: auto;
+  /* 세로 스크롤 허용 */
 }
 
 .main-title {
@@ -27,23 +38,27 @@
 
 .project-list {
   display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px 40px;
+  padding-bottom: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .project-card {
+  flex: 0 0 320px;
   position: relative;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  width: 300px;
+  width: 320px;
   height: 320px;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
 }
 
 .project-img {
@@ -177,4 +192,17 @@
 .project-title-row button:hover {
   background: #2563eb;
   color: #fff;
+}
+
+@media (max-width: 900px) {
+  .project-card {
+    width: 90vw;
+    min-width: 240px;
+    max-width: 400px;
+  }
+
+  .project-list {
+    gap: 16px;
+    padding-bottom: 16px;
+  }
 }
