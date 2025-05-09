@@ -144,3 +144,18 @@
     overflow: hidden;
     pointer-events: none;
 }
+
+/* 기본 색상(비활성) */
+.sidebar-menu .sidebar-icon,
+.sidebar-menu .sidebar-label {
+    color: #444;
+    /* 또는 원하는 기본색 */
+    transition: color 0.2s;
+}
+
+/* 활성화(선택)된 메뉴만 파란색 */
+.sidebar-menu .active .sidebar-icon,
+.sidebar-menu .active .sidebar-label {
+    color: #6366f1;
+    /* 파란색 */
+}

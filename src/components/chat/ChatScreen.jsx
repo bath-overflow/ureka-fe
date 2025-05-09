@@ -1,11 +1,16 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
+
 import "./ChatScreen.css";
 
-function ChatScreen({ projects }) {
+function ChatScreen({ projects, setCurrentProjectId, currentProjectId }) {
   const { id } = useParams();
+  useEffect(() => {
+    setCurrentProjectId(id);
+  }, [id, setCurrentProjectId]);
   const project = projects.find(p => String(p.id) === String(id));
   const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
   const [input, setInput] = useState("");
@@ -56,7 +61,7 @@ function ChatScreen({ projects }) {
 
   return (
     <div className="chat-root">
-      <Sidebar />
+      <Sidebar currentProjectId={currentProjectId} />
       <div className="chat-main">
         <div className="chat-title-row">
           {editing ? (
