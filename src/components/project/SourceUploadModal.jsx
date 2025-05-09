@@ -54,7 +54,7 @@ const SourceUploadModal = ({ onUploadComplete }) => {
                         ref={fileInputRef}
                         style={{ display: "none" }}
                         onChange={handleFileChange}
-                        accept=".pdf"
+                        accept=".pdf,application/pdf"
                     />
                 </div>
                 <div className="divider" />

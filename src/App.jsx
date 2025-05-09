@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Login from "./components/login/Login";
 import MainScreen from "./components/main/MainScreen";
 import NewProject from "./components/project/NewProject";
 import ProjectDetail from "./components/main/ProjectDetail";
 import ChatScreen from "./components/chat/ChatScreen";
+import ResourcesScreen from './components/resources/ResourcesScreen';
+import Sidebar from './components/layout/Sidebar';
 import './App.css';
 
 function App() {
@@ -37,6 +39,8 @@ function App() {
 
   const [input, setInput] = useState("");
 
+  const [currentProjectId, setCurrentProjectId] = useState(null);
+
   const handleSend = () => {
     if (input.trim() === "") return;
     setMessages([
@@ -52,12 +56,23 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/main" element={<MainScreen projects={projects} setProjects={setProjects} />} />
         <Route path="/new-project" element={<NewProject projects={projects} setProjects={setProjects} />} />
-        {/* <Route path="/project/:id" element={<ProjectDetail />} /> */}
         <Route
           path="/chat/project/:id"
-          element={<ChatScreen projects={projects} />}
+          element={<ChatScreen projects={projects} setCurrentProjectId={setCurrentProjectId} currentProjectId={currentProjectId} />}
+        />
+        <Route
+          path="/resources/:projectId"
+          element={
+            <ResourcesScreen
+              setCurrentProjectId={setCurrentProjectId}
+              currentProjectId={currentProjectId}
+              projects={projects}
+              setProjects={setProjects}
+            />
+          }
         />
       </Routes>
+      <Sidebar currentProjectId={currentProjectId} />
     </BrowserRouter>
   );
 }
