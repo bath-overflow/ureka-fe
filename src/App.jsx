@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Login from "./components/login/Login";
 import MainScreen from "./components/main/MainScreen";
@@ -10,28 +10,7 @@ import Sidebar from './components/layout/Sidebar';
 import './App.css';
 
 function App() {
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      title: "컴퓨터아키텍처",
-      desc: "2025년 강의자료를 기반으로 ... (프로젝트에 대한 간단한 요약 설명)",
-    },
-    {
-      id: 2,
-      title: "Title",
-      desc: "으아아 설명이에요요.",
-    },
-    {
-      id: 3,
-      title: "Title",
-      desc: "Nu설명입니다다.",
-    },
-    {
-      id: 4,
-      title: "Title",
-      desc: "얼레벌레 설명 faucibus.",
-    },
-  ]);
+  const [projects, setProjects] = useState([]); //초기값 제거
 
   const [messages, setMessages] = useState([
     { id: 1, text: "UREKA와 자유롭게 대화해보세요!", sender: "system" }
@@ -40,6 +19,23 @@ function App() {
   const [input, setInput] = useState("");
 
   const [currentProjectId, setCurrentProjectId] = useState(null);
+
+  useEffect(() => {
+    console.log("🔥 App의 useEffect 시작됨");
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/projects/');
+        if (!response.ok) throw new Error('Failed to fetch projects');
+        const data = await response.json();
+        setProjects(data);
+      } catch (err) {
+        console.error('프로젝트 불러오기 실패:', err);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
 
   const handleSend = () => {
     if (input.trim() === "") return;
@@ -55,10 +51,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/main" element={<MainScreen projects={projects} setProjects={setProjects} />} />
-        <Route path="/new-project" element={<NewProject projects={projects} setProjects={setProjects} />} />
+        <Route path="/new-project" element={
+          <NewProject
+            projects={projects}
+            setProjects={setProjects} />} />
         <Route
           path="/chat/project/:id"
-          element={<ChatScreen projects={projects} setCurrentProjectId={setCurrentProjectId} currentProjectId={currentProjectId} />}
+          element={<ChatScreen projects={projects} setProjects={setProjects} setCurrentProjectId={setCurrentProjectId} currentProjectId={currentProjectId} />}
         />
         <Route
           path="/resources/:projectId"
