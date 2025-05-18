@@ -1,0 +1,50 @@
+.resources-main {
+    flex: 1;
+    padding: 32px 40px;
+}
+
+.resources-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.resources-box {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+    padding: 24px 24px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+}
+
+.resources-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.resources-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px 0;
+}
+
+.resources-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+}
+
+.resources-add-btn {
+    align-self: flex-end;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}

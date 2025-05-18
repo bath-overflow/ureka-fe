@@ -15,10 +15,15 @@ function NewProject({ projects, setProjects }) {
             id: newId,
             title: "새 프로젝트",
             desc: "설명을 입력하세요.",
-            // files 등 추가 가능
+            files: files // 업로드한 파일 리스트 저장
         };
         setProjects([...projects, newProject]);
         navigate(`/chat/project/${newId}`);
+    };
+
+    const handleFileClick = (file) => {
+        console.log("File clicked:", file);
+        // ...이하 생략
     };
 
     return (
