@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SourceUploadModal from "./SourceUploadModal";
 import "./NewProject.css";
-import { useResourceUpload } from '../../hooks/useResourceUpload';
-import { uploadFileDirect } from '../../hooks/useResourceUpload';
+import { uploadFileDirect, handleFileUploadWithLimit } from '../../hooks/useResourceUpload';
 
 function NewProject({ projects, setProjects }) {
     const navigate = useNavigate();
@@ -28,7 +27,11 @@ function NewProject({ projects, setProjects }) {
 
             // hooks 대신 일반 함수 사용
             for (const file of files) {
-                await uploadFileDirect(projectId, file);
+                await handleFileUploadWithLimit({
+                    file,
+                    projectId,
+                    uploadFunction: uploadFileDirect,
+                });
             }
 
             setProjects((prev) => [...prev, newProject]);

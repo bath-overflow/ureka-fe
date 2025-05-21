@@ -6,6 +6,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import './ResourcesScreen.css';
 import { useResourceUpload } from '../../hooks/useResourceUpload';
+import { handleFileUploadWithLimit } from '../../hooks/useResourceUpload';
 
 // PDF.js worker 설정
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -35,22 +36,13 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
     const projectTitle = project?.title || "프로젝트";
 
 
-    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-
     const handleUpload = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.size > MAX_SIZE) { //임의로 50MB라고 지정해둠
-            alert("50MB 이하의 파일만 업로드할 수 있습니다.");
-            return;
-        }
-
-        try {
-            await uploadFile(file);
-        } catch {
-            alert('파일 업로드 중 오류 발생');
-        }
+        await handleFileUploadWithLimit({
+            file,
+            projectId,
+            uploadFunction: async (_, file) => uploadFile(file), // useResourceUpload 내부 함수
+        });
     };
 
 
