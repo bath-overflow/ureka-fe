@@ -7,7 +7,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import './ResourcesScreen.css';
 import { useResourceUpload } from '../../hooks/useResourceUpload';
 import { handleFileUploadWithLimit } from '../../hooks/useResourceUpload';
-import PdfMarkdownViewer from "../common/PdfMarkdownViewer";
+import MarkdownViewer from "../common/MarkdownViewer";
 
 // PDF.js worker 설정
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -18,6 +18,7 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
     const [selectedFileUrl, setSelectedFileUrl] = useState(null);
     const [numPages, setNumPages] = useState(null);
     const [activeFile, setActiveFile] = useState(null); // ✅ 선택된 파일 상태
+    const isMarkdown = (filename) => filename.toLowerCase().endsWith('.md');
 
     const {
         files,
@@ -27,6 +28,10 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
         deleteFile
     } = useResourceUpload(projectId);
 
+    const mockFile = {
+        filename: "mock.md",
+        file_url: "mock"
+    };
 
     useEffect(() => {
         if (!projectId || projects.length === 0) return;
@@ -59,16 +64,17 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
     };
 
     const handleFileClick = (file) => {
-        if (!isPdf(file.filename)) return;
-
         const fallbackUrl = `/api/projects/${projectId}/resources/${encodeURIComponent(file.filename)}`;
         const finalUrl = file.file_url || fallbackUrl;
 
-        // ✅ 새 탭에서 PDF 파일 자체 열기
-        window.open(finalUrl, "_blank");
+        // PDF 파일이면 새 탭에서 열기만 한다
+        if (isPdf(file.filename)) {
+            window.open(finalUrl, "_blank");
+            console.log("PDF 파일 열기");
+        }
 
-        // ✅ 현재 화면에는 마크다운 렌더링
-        setActiveFile(file);
+        // ✅ 마크다운 뷰어에서 렌더링
+        setActiveFile(mockFile);
     };
 
 
@@ -87,64 +93,67 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
                     {projectTitle}
                 </h1>
 
-                {activeFile ? (
-                    // ✅ 마크다운 뷰어 표시
-                    <PdfMarkdownViewer
-                        fileUrl={
-                            activeFile.file_url ||
-                            `/api/projects/${projectId}/resources/${encodeURIComponent(activeFile.filename)}`
-                        }
-                    />
-                ) : (
-                    // ✅ 파일 목록 표시
-                    <div className="resources-box">
-                        <div className="resources-label">Resource</div>
-                        {loading ? (
-                            <div>로딩 중...</div>
-                        ) : (
-                            <ul className="resources-list">
-                                {files.length > 0 ? (
-                                    files.map((file) => (
-                                        <li key={file.filename} className="resources-item">
-                                            <span
-                                                style={{
-                                                    cursor: isPdf(file.filename) ? 'pointer' : 'default',
-                                                    color: isPdf(file.filename) ? '#2563eb' : undefined,
-                                                }}
-                                                onClick={() => handleFileClick(file)} // ✅ 여기서 마크다운 + 새 탭 열기
-                                            >
-                                                {file.filename}
-                                            </span>
-                                            <button
-                                                style={{
-                                                    marginLeft: 8,
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: 'red',
-                                                    cursor: 'pointer',
-                                                }}
-                                                onClick={() => handleDelete(file.filename)}
-                                            >
-                                                삭제
-                                            </button>
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li className="resources-item">업로드된 파일이 없습니다.</li>
-                                )}
-                            </ul>
-                        )}
-                        <input
-                            type="file"
-                            style={{ display: 'none' }}
-                            id="resource-upload"
-                            onChange={handleUpload}
+                {
+                    activeFile && isMarkdown(activeFile.filename) ? (
+                        <MarkdownViewer
+                            fileUrl={
+                                activeFile.file_url ||
+                                `/api/projects/${projectId}/resources/${encodeURIComponent(activeFile.filename)}`
+                            }
                         />
-                        <label htmlFor="resource-upload" className="resources-add-btn">
-                            + 파일 추가
-                        </label>
-                    </div>
-                )}
+                    ) : (
+                        // ✅ 파일 목록 표시
+                        <div className="resources-box">
+                            <div className="resources-label">Resource</div>
+                            {loading ? (
+                                <div>로딩 중...</div>
+                            ) : (
+                                <ul className="resources-list">
+                                    {files.length > 0 ? (
+                                        files.map((file) => (
+                                            <li key={file.filename} className="resources-item">
+                                                <span
+                                                    style={{
+                                                        cursor: isPdf(file.filename) ? 'pointer' : 'default',
+                                                        color: isPdf(file.filename) ? '#2563eb' : undefined,
+                                                    }}
+                                                    onClick={() => handleFileClick(file)} // ✅ 여기서 마크다운 + 새 탭 열기
+                                                >
+                                                    {file.filename}
+                                                </span>
+                                                <button
+                                                    style={{
+                                                        marginLeft: 8,
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'red',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                    onClick={() => handleDelete(file.filename)}
+                                                >
+                                                    삭제
+                                                </button>
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="resources-item">업로드된 파일이 없습니다.</li>
+                                    )}
+                                </ul>
+                            )}
+                            <input
+                                type="file"
+                                style={{ display: 'none' }}
+                                id="resource-upload"
+                                onChange={handleUpload}
+                            />
+                            <label htmlFor="resource-upload" className="resources-add-btn">
+                                + 파일 추가
+                            </label>
+                        </div>
+                    )
+                }
+
+
             </div>
         </div>
     );
