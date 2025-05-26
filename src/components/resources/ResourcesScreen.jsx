@@ -8,6 +8,7 @@ import './ResourcesScreen.css';
 import { useResourceUpload } from '../../hooks/useResourceUpload';
 import { handleFileUploadWithLimit } from '../../hooks/useResourceUpload';
 import MarkdownViewer from "../common/MarkdownViewer";
+import PdfViewer from "../common/PdfViewer";
 
 // PDF.js worker 설정
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -67,15 +68,15 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
         const fallbackUrl = `/api/projects/${projectId}/resources/${encodeURIComponent(file.filename)}`;
         const finalUrl = file.file_url || fallbackUrl;
 
-        // PDF 파일이면 새 탭에서 열기만 한다
         if (isPdf(file.filename)) {
-            window.open(finalUrl, "_blank");
-            console.log("PDF 파일 열기");
+            setActiveFile({ ...file, type: 'pdf', file_url: finalUrl }); // ✅ PDF 컴포넌트에서 표시
+        } else if (isMarkdown(file.filename)) {
+            setActiveFile({ ...file, type: 'md', file_url: finalUrl }); // ✅ MarkdownViewer에서 표시
+        } else {
+            window.alert("지원하지 않는 파일 형식입니다.");
         }
-
-        // ✅ 마크다운 뷰어에서 렌더링
-        setActiveFile(mockFile);
     };
+
 
 
     // PDF 파일 여부 확인
@@ -94,13 +95,21 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
                 </h1>
 
                 {
-                    activeFile && isMarkdown(activeFile.filename) ? (
-                        <MarkdownViewer
-                            fileUrl={
-                                activeFile.file_url ||
-                                `/api/projects/${projectId}/resources/${encodeURIComponent(activeFile.filename)}`
-                            }
-                        />
+                    activeFile ? (
+                        activeFile.type === "pdf" ? (
+                            <div className="pdf-markdown-wrapper">
+                                <div className="pdf-viewer-wrapper">
+                                    <PdfViewer fileUrl={activeFile.file_url} />
+                                </div>
+                                <div className="markdown-viewer-wrapper">
+                                    <MarkdownViewer fileUrl="mock" />
+                                </div>
+                            </div>
+                        ) : (
+                            <MarkdownViewer fileUrl={activeFile.file_url} />
+                            //<MarkdownViewer fileUrl={activeFile.file_url.replace('.pdf', '.md')} />
+
+                        )
                     ) : (
                         // ✅ 파일 목록 표시
                         <div className="resources-box">
