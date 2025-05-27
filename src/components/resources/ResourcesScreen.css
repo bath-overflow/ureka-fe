@@ -48,3 +48,47 @@
     font-weight: bold;
     cursor: pointer;
 }
+
+.pdf-markdown-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 85vh;
+    overflow: hidden;
+}
+
+.pdf-viewer-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.markdown-viewer-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+/* PDF 렌더링 전체 영역 */
+.pdf-viewer-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border-radius: 8px;
+    background: #fff;
+}
+
+/* 가운데 정렬 + 최대 너비 제한 */
+.pdf-viewer-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px;
+}
