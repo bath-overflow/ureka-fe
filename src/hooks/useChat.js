@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useChatSocket from './useChatSocket';
 
 export const useChat = (projectId) => {
     const [messages, setMessages] = useState([]);
@@ -35,52 +36,29 @@ export const useChat = (projectId) => {
         fetchChatHistory();
     }, [projectId]);
 
+    const { sendMessage: sendSocketMessage } = useChatSocket((message) => {
+        const botMsg = {
+            id: messages.length + 1,
+            text: message.text,
+            sender: "bot"
+        };
+        setMessages(prev => [...prev, botMsg]);
+    });
+
     const sendMessage = async (input) => {
         if (input.trim() === "") return;
 
-        const userMsg = {
-            id: messages.length + 1,
-            text: input,
-            sender: "user"
+        const chatMessage = {
+            role: "user",
+            message: input
         };
 
         // 사용자 메시지 추가
-        setMessages(prev => [...prev, userMsg]);
+        setMessages(prev => [...prev, chatMessage]);
 
         try {
-            // API 엔드포인트가 준비되기 전까지는 에코 메시지로 대체
-            const botMsg = {
-                id: messages.length + 2,
-                text: input,
-                sender: "bot"
-            };
-            setMessages(prev => [...prev, botMsg]);
-
-            // API 엔드포인트가 준비되면 아래 주석을 해제
-            /*
-            const response = await fetch(`/api/projects/${projectId}/chats`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: input,
-                    role: 'user'
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to send message');
-
-            // 서버 응답으로부터 봇 메시지 받기
-            const data = await response.json();
-            const botMsg = {
-                id: messages.length + 2,
-                text: data.message,
-                sender: "bot"
-            };
-
-            setMessages(prev => [...prev, botMsg]);
-            */
+            // Send the user message through WebSocket in the ChatMessage format
+            sendSocketMessage(chatMessage);
             setError(null);
         } catch (error) {
             console.error('Error sending message:', error);

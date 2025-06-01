@@ -1,6 +1,11 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 class ChatSocket {
-  constructor(url) {
-    this.url = url;
+  constructor(chat_id) {
+
+    this.url = chat_id
+      ? `${API_BASE_URL}/ws/chat?chat_id=${chat_id}`
+      : `${API_BASE_URL}/ws/chat`;
     this.socket = null;
     this.messageHandlers = new Map();
     this.reconnectAttempts = 0;
@@ -26,11 +31,31 @@ class ChatSocket {
     };
 
     this.socket.onmessage = (event) => {
+      console.log('Received message:', event.data);
+
       try {
         const message = JSON.parse(event.data);
         this.handleMessage(message);
       } catch (error) {
         console.error('Error parsing message:', error);
+
+        if (event.data.startsWith('connected:')) {
+          console.log('Handling non-JSON connected message:', event.data);
+          
+          // Try to extract chat_id if present
+          const chatIdMatch = event.data.match(/Your chat_id is: ([a-f0-9]+)/);
+          if (chatIdMatch && chatIdMatch[1]) {
+            const chatId = chatIdMatch[1];
+            console.log('Extracted chat_id:', chatId);
+            
+            // Notify handlers of connection event
+            const connectionMessage = {
+              type: 'connection_established',
+              data: { chatId: chatId }
+            };
+            this.handleMessage(connectionMessage);
+          }
+        }
       }
     };
   }

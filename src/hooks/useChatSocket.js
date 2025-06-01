@@ -1,11 +1,16 @@
 import { useEffect, useRef, useCallback } from 'react';
-import MockChatSocket from '../api/mock/mockChatSocket';
+import ChatSocket from '../api/websocket/chatSocket'; 
+// import MockChatSocket from '../api/mock/mockChatSocket';
+
+
+
 
 const useChatSocket = (onMessageReceived) => {
   const socketRef = useRef(null);
 
   const connect = useCallback(() => {
-    const socket = new MockChatSocket('ws://mock');
+    // const socket = new MockChatSocket('ws://mock');
+    const socket = new ChatSocket()
     socketRef.current = socket;
 
     socket.on('message_received', (message) => {
