@@ -1,20 +1,37 @@
-import React, { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
 import "./ChatScreen.css";
 
 function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProjectId }) {
-
   const { id } = useParams();
+  const [input, setInput] = useState("");
+  const [projectTitle, setProjectTitle] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const messagesEndRef = useRef(null);
 
+  const { messages, sendMessage, sendHint, isLoading, error, isStreaming } = useChat(id);
 
   useEffect(() => {
     setCurrentProjectId(id);
   }, [id, setCurrentProjectId]);
 
-  const [input, setInput] = useState("");
+  useEffect(() => {
+    if (projects.length > 0) {
+      const project = projects.find(p => String(p.id) === String(id));
+      if (project) {
+        setProjectTitle(project.title);
+        setInputValue(project.title);
+      }
+    }
+  }, [projects, id]);
+
+  // 메시지가 추가될 때마다 스크롤을 아래로 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // ✅ 아직 projects가 로딩되지 않았을 경우 대기
   if (projects.length === 0) {
@@ -28,16 +45,11 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     return <div style={{ padding: 40 }}>존재하지 않는 프로젝트입니다.</div>;
   }
 
-  const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
-
   const handleSend = () => {
+    if (input.trim() === "") return;
     sendMessage(input);
     setInput("");
   };
-
-  const [projectTitle, setProjectTitle] = useState(project.title);
-  const [editing, setEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(projectTitle);
 
   const handleEdit = () => {
     setEditing(true);
@@ -138,8 +150,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
                 }
               >
                 {msg.text}
+                {isStreaming && msg.sender === "bot" && msg === messages[messages.length - 1] && (
+                  <span className="typing-indicator">...</span>
+                )}
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button className="chat-hint-btn" onClick={handleHint}>HINT</button>
@@ -151,8 +167,13 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
               onChange={e => setInput(e.target.value)}
               placeholder="채팅을 시작해보세요."
               onKeyDown={e => e.key === "Enter" && handleSend()}
+              disabled={isStreaming}
             />
-            <button className="chat-send-btn" onClick={handleSend}>⮞</button>
+            <button 
+              className="chat-send-btn" 
+              onClick={handleSend}
+              disabled={isStreaming}
+            >⮞</button>
           </div>
           <div className="chat-bottom-buttons">
             <button disabled>추천질문1</button>
