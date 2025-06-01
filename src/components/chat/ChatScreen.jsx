@@ -1,19 +1,34 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
 import "./ChatScreen.css";
 
-function ChatScreen({ projects }) {
+function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProjectId }) {
+
   const { id } = useParams();
-  const project = projects.find(p => String(p.id) === String(id));
-  const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
+
+
+  useEffect(() => {
+    setCurrentProjectId(id);
+  }, [id, setCurrentProjectId]);
+
   const [input, setInput] = useState("");
+
+  // ✅ 아직 projects가 로딩되지 않았을 경우 대기
+  if (projects.length === 0) {
+    return <div style={{ padding: 40 }}>프로젝트 목록을 불러오는 중입니다...</div>;
+  }
+
+  const project = projects.find(p => String(p.id) === String(id));
 
   // project가 없으면 안내 메시지
   if (!project) {
     return <div style={{ padding: 40 }}>존재하지 않는 프로젝트입니다.</div>;
   }
+
+  const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
 
   const handleSend = () => {
     sendMessage(input);
@@ -31,9 +46,36 @@ function ChatScreen({ projects }) {
 
   const handleInputChange = (e) => setInputValue(e.target.value);
 
-  const handleInputBlur = () => {
-    setProjectTitle(inputValue.trim() || "제목 없음");
+  const handleInputBlur = async () => {
+    const newTitle = inputValue.trim() || "제목 없음";
+    setProjectTitle(newTitle);
     setEditing(false);
+
+    // 🛰️ 서버에 제목 업데이트
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          description: project.desc || "설명" // description도 함께 보냄
+        })
+      });
+
+      if (!res.ok) throw new Error("제목 업데이트 실패");
+
+      // ✅ 상위 상태도 업데이트
+      setProjects((prev) =>
+        prev.map((proj) =>
+          String(proj.id) === String(id) ? { ...proj, title: newTitle } : proj
+        )
+      );
+    } catch (err) {
+      console.error("❌ 제목 업데이트 실패:", err);
+      alert("제목 업데이트에 실패했습니다.");
+    }
   };
 
   const handleInputKeyDown = (e) => {
@@ -56,7 +98,7 @@ function ChatScreen({ projects }) {
 
   return (
     <div className="chat-root">
-      <Sidebar />
+      <Sidebar currentProjectId={currentProjectId} />
       <div className="chat-main">
         <div className="chat-title-row">
           {editing ? (
