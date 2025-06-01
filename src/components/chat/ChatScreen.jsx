@@ -11,8 +11,14 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const isSubmitting = useRef(false);
 
   const { messages, sendMessage, sendHint, isLoading, error, isStreaming } = useChat(id);
+
+  useEffect(() => {
+    console.log('Streaming state changed:', isStreaming);
+  }, [isStreaming]);
 
   useEffect(() => {
     setCurrentProjectId(id);
@@ -30,7 +36,9 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
 
   // 메시지가 추가될 때마다 스크롤을 아래로 이동
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   // ✅ 아직 projects가 로딩되지 않았을 경우 대기
@@ -45,10 +53,28 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     return <div style={{ padding: 40 }}>존재하지 않는 프로젝트입니다.</div>;
   }
 
-  const handleSend = () => {
-    if (input.trim() === "") return;
-    sendMessage(input);
-    setInput("");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isSubmitting.current || !input.trim() || isStreaming) return;
+    
+    isSubmitting.current = true;
+    const messageToSend = input.trim();
+    setInput('');
+    sendMessage(messageToSend);
+    
+    // 다음 메시지 전송을 위해 약간의 딜레이 후 플래그 해제
+    setTimeout(() => {
+      isSubmitting.current = false;
+    }, 100);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   };
 
   const handleEdit = () => {
@@ -56,7 +82,11 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     setInputValue(projectTitle);
   };
 
-  const handleInputChange = (e) => setInputValue(e.target.value);
+  const handleInputChange = (e) => {
+    if (!isSubmitting.current) {
+      setInput(e.target.value);
+    }
+  };
 
   const handleInputBlur = async () => {
     const newTitle = inputValue.trim() || "제목 없음";
@@ -87,12 +117,6 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     } catch (err) {
       console.error("❌ 제목 업데이트 실패:", err);
       alert("제목 업데이트에 실패했습니다.");
-    }
-  };
-
-  const handleInputKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleInputBlur();
     }
   };
 
@@ -137,22 +161,20 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
         </div>
         <div className="chat-box">
           <div className="chat-label">Chat</div>
-          <div className="chat-messages">
-            {messages.map(msg => (
+          <div className="chat-messages" ref={messagesContainerRef}>
+            {messages.map((msg, index) => (
               <div
                 key={msg.id}
                 className={
                   msg.sender === "user"
                     ? "chat-bubble user"
-                    : msg.sender === "bot"
-                      ? "chat-bubble bot"
+                    : msg.sender === "assistant"
+                      ? "chat-bubble assistant"
                       : "chat-bubble system"
                 }
               >
                 {msg.text}
-                {isStreaming && msg.sender === "bot" && msg === messages[messages.length - 1] && (
-                  <span className="typing-indicator">...</span>
-                )}
+                
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -164,15 +186,15 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
             <input
               className="chat-input"
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={handleInputChange}
               placeholder="채팅을 시작해보세요."
-              onKeyDown={e => e.key === "Enter" && handleSend()}
-              disabled={isStreaming}
+              onKeyDown={handleKeyDown}
+              disabled={isStreaming || isSubmitting.current}
             />
             <button 
               className="chat-send-btn" 
-              onClick={handleSend}
-              disabled={isStreaming}
+              onClick={handleSubmit}
+              disabled={isStreaming || isSubmitting.current}
             >⮞</button>
           </div>
           <div className="chat-bottom-buttons">

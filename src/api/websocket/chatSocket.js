@@ -13,6 +13,9 @@ class WebSocketManager {
     this.heartbeatInterval = null;
     this.url = `${API_BASE_URL}/ws/chat`;
     this.currentStreamMessage = '';
+    this.lastMessageTime = null;
+    this.messageQueue = [];
+    this.isProcessingQueue = false;
   }
 
   connect() {
@@ -117,9 +120,15 @@ class WebSocketManager {
                 });
                 this.currentStreamMessage = '';
               }
+              // EOS 메시지를 별도로 전달
+              this.handleMessage({
+                type: 'message_received',
+                data: { message: '<EOS>' }
+              });
             } else {
               // 스트리밍 메시지 누적
               this.currentStreamMessage += content;
+              // 스트리밍 메시지는 누적된 전체 내용을 전달
               this.handleMessage({
                 type: 'message_received',
                 data: { message: this.currentStreamMessage }
@@ -186,10 +195,15 @@ class WebSocketManager {
       return;
     }
 
+    // 서버로부터 받은 메시지에 role 추가
+    if (type === 'message_received' && data) {
+      data.role = 'assistant';
+    }
+
     const handlers = this.messageHandlers.get(type) || [];
     handlers.forEach(handler => {
       try {
-        handler(data);
+        handler({ type, data });
       } catch (error) {
         console.error(`Error in message handler for type ${type}:`, error);
       }
@@ -213,6 +227,25 @@ class WebSocketManager {
     }
   }
 
+  async processMessageQueue() {
+    if (this.isProcessingQueue || this.messageQueue.length === 0) return;
+    
+    this.isProcessingQueue = true;
+    while (this.messageQueue.length > 0) {
+      const message = this.messageQueue.shift();
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        try {
+          console.log('Processing message from queue:', message);
+          this.socket.send(JSON.stringify(message));
+          await new Promise(resolve => setTimeout(resolve, 100)); // 메시지 간 딜레이
+        } catch (error) {
+          console.error('Error sending message from queue:', error);
+        }
+      }
+    }
+    this.isProcessingQueue = false;
+  }
+
   send(type, data) {
     if (!type || typeof type !== 'string') {
       console.error('Invalid message type:', type);
@@ -224,16 +257,26 @@ class WebSocketManager {
       return;
     }
 
+    // 마지막 메시지 전송 시간과 현재 시간을 비교
+    const now = Date.now();
+    if (this.lastMessageTime && now - this.lastMessageTime < 1000) {
+      console.log('Message sending too quickly, ignoring');
+      return;
+    }
+    this.lastMessageTime = now;
+
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       try {
+        // 사용자 메시지는 'user' role 사용
         const message = {
           role: "user",
           message: data.message
         };
-        console.log('Sending message to server:', message);
-        this.socket.send(JSON.stringify(message));
+        console.log('Adding message to queue:', message);
+        this.messageQueue.push(message);
+        this.processMessageQueue();
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('Error adding message to queue:', error);
         this.handleReconnect();
       }
     } else {

@@ -103,7 +103,7 @@
   border-bottom-right-radius: 4px;
 }
 
-.chat-bubble.bot {
+.chat-bubble.assistant {
   align-self: flex-start;
   background-color: #f0f0f0;
   color: #333;
