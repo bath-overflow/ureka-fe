@@ -7,8 +7,14 @@ function Sidebar({ currentProjectId }) {
     const [collapsed, setCollapsed] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const isChatActive = location.pathname.startsWith("/chat/project/");
+    const pathname = location.pathname;
 
+    // 경로 정의 (null 안전 처리)
+    const chatPath = currentProjectId ? `/chat/project/${currentProjectId}` : null;
+    const debatePath = currentProjectId ? `/debate/project/${currentProjectId}` : null;
+    const resourcesPath = currentProjectId ? `/resources/${currentProjectId}` : null;
+
+    console.log("pathname:", pathname, "chatPath:", chatPath)
     return (
         <nav className={`sidebar${collapsed ? " collapsed" : ""}`}>
             <div className="sidebar-header">
@@ -29,27 +35,35 @@ function Sidebar({ currentProjectId }) {
                     {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
                 </button>
             </div>
+
             <ul className="sidebar-menu">
                 <li>
                     <NavLink
-                        to={currentProjectId ? `/chat/project/${currentProjectId}` : "/main"}
-                        className={isChatActive ? "active" : ""}
+                        to={chatPath || "#"}
+                        className={pathname === chatPath ? "active" : ""}
+                        style={!chatPath ? { pointerEvents: "none", opacity: 0.5 } : {}}
                     >
                         <FaComments className="sidebar-icon" />
                         {!collapsed && <span className="sidebar-label">Chat</span>}
                     </NavLink>
                 </li>
+
                 <li>
-                    <NavLink to="/debate" className={({ isActive }) => isActive ? "active" : ""}>
+                    <NavLink
+                        to={debatePath || "#"}
+                        className={pathname === debatePath ? "active" : ""}
+                        style={!debatePath ? { pointerEvents: "none", opacity: 0.5 } : {}}
+                    >
                         <FaLayerGroup className="sidebar-icon" />
                         {!collapsed && <span className="sidebar-label">In-depth Debate</span>}
                     </NavLink>
                 </li>
+
                 <li>
                     <NavLink
-                        to={currentProjectId ? `/resources/${currentProjectId}` : "#"}
-                        className={({ isActive }) => isActive ? "active" : ""}
-                        style={!currentProjectId ? { pointerEvents: "none", opacity: 0.5 } : {}}
+                        to={resourcesPath || "#"}
+                        className={pathname === resourcesPath ? "active" : ""}
+                        style={!resourcesPath ? { pointerEvents: "none", opacity: 0.5 } : {}}
                     >
                         <FaBook className="sidebar-icon" />
                         {!collapsed && <span className="sidebar-label">Resources</span>}

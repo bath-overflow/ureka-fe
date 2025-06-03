@@ -8,6 +8,8 @@ import ChatScreen from "./components/chat/ChatScreen";
 import ResourcesScreen from './components/resources/ResourcesScreen';
 import Sidebar from './components/layout/Sidebar';
 import './App.css';
+import InDepthDebateScreen from './components/debate/InDepthDebateScreen';
+
 
 function App() {
   const [projects, setProjects] = useState([]); //초기값 제거
@@ -49,30 +51,49 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 사이드바 없는 화면 */}
         <Route path="/" element={<Login />} />
         <Route path="/main" element={<MainScreen projects={projects} setProjects={setProjects} />} />
-        <Route path="/new-project" element={
-          <NewProject
-            projects={projects}
-            setProjects={setProjects} />} />
-        <Route
-          path="/chat/project/:id"
-          element={<ChatScreen projects={projects} setProjects={setProjects} setCurrentProjectId={setCurrentProjectId} currentProjectId={currentProjectId} />}
-        />
-        <Route
-          path="/resources/:projectId"
-          element={
-            <ResourcesScreen
-              setCurrentProjectId={setCurrentProjectId}
-              currentProjectId={currentProjectId}
-              projects={projects}
-              setProjects={setProjects}
-            />
-          }
-        />
+        <Route path="/new-project" element={<NewProject projects={projects} setProjects={setProjects} />} />
+
+        {/* 사이드바 포함된 화면 */}
+        <Route path="/*" element={
+          <div className="layout">
+            <Sidebar currentProjectId={currentProjectId} />
+            <Routes>
+              <Route
+                path="chat/project/:id"
+                element={<ChatScreen
+                  currentProjectId={currentProjectId}
+                  setCurrentProjectId={setCurrentProjectId}
+                  projects={projects}
+                  setProjects={setProjects}
+                />}
+              />
+              <Route
+                path="debate/project/:projectId"
+                element={<InDepthDebateScreen
+                  currentProjectId={currentProjectId}
+                  setCurrentProjectId={setCurrentProjectId}
+                  projects={projects}
+                  setProjects={setProjects}
+                />}
+              />
+              <Route
+                path="resources/:projectId"
+                element={<ResourcesScreen
+                  currentProjectId={currentProjectId}
+                  setCurrentProjectId={setCurrentProjectId}
+                  projects={projects}
+                  setProjects={setProjects}
+                />}
+              />
+            </Routes>
+          </div>
+        } />
       </Routes>
-      <Sidebar currentProjectId={currentProjectId} />
     </BrowserRouter>
+
   );
 }
 

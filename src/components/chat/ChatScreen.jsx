@@ -98,7 +98,6 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
 
   return (
     <div className="chat-root">
-      <Sidebar currentProjectId={currentProjectId} />
       <div className="chat-main">
         <div className="chat-title-row">
           {editing ? (

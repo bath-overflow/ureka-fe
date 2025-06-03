@@ -84,7 +84,6 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
 
     return (
         <div className="chat-root">
-            <Sidebar currentProjectId={currentProjectId} />
             <div className="resources-main">
                 <h1
                     className="resources-title"
