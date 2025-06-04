@@ -96,13 +96,8 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
                 {
                     activeFile ? (
                         activeFile.type === "pdf" ? (
-                            <div className="pdf-markdown-wrapper">
-                                <div className="pdf-viewer-wrapper">
-                                    <PdfViewer fileUrl={activeFile.file_url} />
-                                </div>
-                                <div className="markdown-viewer-wrapper">
-                                    <MarkdownViewer fileUrl="mock" />
-                                </div>
+                            <div className="pdf-viewer-wrapper">
+                                <PdfViewer fileUrl={activeFile.file_url} />
                             </div>
                         ) : (
                             <MarkdownViewer fileUrl={activeFile.file_url} />
@@ -125,7 +120,7 @@ function ResourcesScreen({ setCurrentProjectId, currentProjectId, projects }) {
                                                         cursor: isPdf(file.filename) ? 'pointer' : 'default',
                                                         color: isPdf(file.filename) ? '#2563eb' : undefined,
                                                     }}
-                                                    onClick={() => handleFileClick(file)} // ✅ 여기서 마크다운 + 새 탭 열기
+                                                    onClick={() => handleFileClick(file)}
                                                 >
                                                     {file.filename}
                                                 </span>
