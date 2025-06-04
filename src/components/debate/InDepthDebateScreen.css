@@ -65,15 +65,11 @@
     transform: translateY(-2px);
 }
 
-.character-avatar {
-    width: 80px;
-    height: 80px;
-    background-color: #d1d5db;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background-image: url('https://via.placeholder.com/80');
-    background-size: cover;
-    background-position: center;
+.character-avatar img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .character-role {
