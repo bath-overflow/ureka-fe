@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
+import ChatBubble from "./ChatBubble";
 import "./ChatScreen.css";
 
 function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProjectId }) {
@@ -124,6 +125,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     sendHint();
   };
 
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleInputBlur();
+    }
+  };
+
   if (isLoading) {
     return <div style={{ padding: 40 }}>로딩 중...</div>;
   }
@@ -162,20 +169,19 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
         <div className="chat-box">
           <div className="chat-label">Chat</div>
           <div className="chat-messages" ref={messagesContainerRef}>
-            {messages.map((msg, index) => (
-              <div
+            {messages.map((msg) => (
+              <ChatBubble
                 key={msg.id}
-                className={
-                  msg.sender === "user"
-                    ? "chat-bubble user"
-                    : msg.sender === "assistant"
-                      ? "chat-bubble assistant"
-                      : "chat-bubble system"
+                text={msg.text}
+                role={msg.sender}
+                alignment={
+                  msg.sender === "user" 
+                    ? "right" 
+                    : msg.sender === "system" 
+                      ? "center" 
+                      : "left"
                 }
-              >
-                {msg.text}
-                
-              </div>
+              />
             ))}
             <div ref={messagesEndRef} />
           </div>
