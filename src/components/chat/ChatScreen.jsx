@@ -1,20 +1,46 @@
-import React, { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
+import ChatBubble from "./ChatBubble";
 import "./ChatScreen.css";
 
 function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProjectId }) {
-
   const { id } = useParams();
+  const [input, setInput] = useState("");
+  const [projectTitle, setProjectTitle] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const isSubmitting = useRef(false);
 
+  const { messages, sendMessage, sendHint, isLoading, error, isStreaming } = useChat(id);
+
+  useEffect(() => {
+    console.log('Streaming state changed:', isStreaming);
+  }, [isStreaming]);
 
   useEffect(() => {
     setCurrentProjectId(id);
   }, [id, setCurrentProjectId]);
 
-  const [input, setInput] = useState("");
+  useEffect(() => {
+    if (projects.length > 0) {
+      const project = projects.find(p => String(p.id) === String(id));
+      if (project) {
+        setProjectTitle(project.title);
+        setInputValue(project.title);
+      }
+    }
+  }, [projects, id]);
+
+  // 메시지가 추가될 때마다 스크롤을 아래로 이동
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   // ✅ 아직 projects가 로딩되지 않았을 경우 대기
   if (projects.length === 0) {
@@ -28,23 +54,40 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     return <div style={{ padding: 40 }}>존재하지 않는 프로젝트입니다.</div>;
   }
 
-  const { messages, sendMessage, sendHint, isLoading, error } = useChat(id);
-
-  const handleSend = () => {
-    sendMessage(input);
-    setInput("");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isSubmitting.current || !input.trim() || isStreaming) return;
+    
+    isSubmitting.current = true;
+    const messageToSend = input.trim();
+    setInput('');
+    sendMessage(messageToSend);
+    
+    // 다음 메시지 전송을 위해 약간의 딜레이 후 플래그 해제
+    setTimeout(() => {
+      isSubmitting.current = false;
+    }, 100);
   };
 
-  const [projectTitle, setProjectTitle] = useState(project.title);
-  const [editing, setEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(projectTitle);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
 
   const handleEdit = () => {
     setEditing(true);
     setInputValue(projectTitle);
   };
 
-  const handleInputChange = (e) => setInputValue(e.target.value);
+  const handleInputChange = (e) => {
+    if (!isSubmitting.current) {
+      setInput(e.target.value);
+    }
+  };
 
   const handleInputBlur = async () => {
     const newTitle = inputValue.trim() || "제목 없음";
@@ -78,14 +121,14 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     }
   };
 
-  const handleInputKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleInputBlur();
-    }
-  };
-
   const handleHint = () => {
     sendHint();
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleInputBlur();
+    }
   };
 
   if (isLoading) {
@@ -125,21 +168,22 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
         </div>
         <div className="chat-box">
           <div className="chat-label">Chat</div>
-          <div className="chat-messages">
-            {messages.map(msg => (
-              <div
+          <div className="chat-messages" ref={messagesContainerRef}>
+            {messages.map((msg) => (
+              <ChatBubble
                 key={msg.id}
-                className={
-                  msg.sender === "user"
-                    ? "chat-bubble user"
-                    : msg.sender === "bot"
-                      ? "chat-bubble bot"
-                      : "chat-bubble system"
+                text={msg.text}
+                role={msg.sender}
+                alignment={
+                  msg.sender === "user" 
+                    ? "right" 
+                    : msg.sender === "system" 
+                      ? "center" 
+                      : "left"
                 }
-              >
-                {msg.text}
-              </div>
+              />
             ))}
+            <div ref={messagesEndRef} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button className="chat-hint-btn" onClick={handleHint}>HINT</button>
@@ -148,11 +192,16 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
             <input
               className="chat-input"
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={handleInputChange}
               placeholder="채팅을 시작해보세요."
-              onKeyDown={e => e.key === "Enter" && handleSend()}
+              onKeyDown={handleKeyDown}
+              disabled={isStreaming || isSubmitting.current}
             />
-            <button className="chat-send-btn" onClick={handleSend}>⮞</button>
+            <button 
+              className="chat-send-btn" 
+              onClick={handleSubmit}
+              disabled={isStreaming || isSubmitting.current}
+            >⮞</button>
           </div>
           <div className="chat-bottom-buttons">
             <button disabled>추천질문1</button>

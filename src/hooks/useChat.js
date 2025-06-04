@@ -1,9 +1,91 @@
 import { useState, useEffect } from 'react';
+import useChatSocket from './useChatSocket';
 
 export const useChat = (projectId) => {
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [chatId, setChatId] = useState(null);
+    const [isStreaming, setIsStreaming] = useState(false);
+
+    const { sendMessage: sendSocketMessage } = useChatSocket((message) => {
+        console.log('Received message in useChat:', message);
+
+        if (message.type === 'chat_id') {
+            setChatId(message.chat_id);
+            return;
+        }
+
+        // 서버로부터 받은 메시지 처리
+        if (message.type === 'message_received') {
+            const content = message.data?.message;
+            console.log('Received message content:', content, 'Current streaming state:', isStreaming);
+
+            // 처리 중 메시지
+            if (content === 'Processing your message...') {
+                console.log('Setting streaming to true');
+                setIsStreaming(true);
+                setMessages(prev => {
+                    // 이미 처리 중 메시지가 있는지 확인
+                    const lastMessage = prev[prev.length - 1];
+                    if (lastMessage?.text === '처리 중...' && lastMessage?.sender === 'assistant') {
+                        return prev;
+                    }
+                    return [...prev, {
+                        id: Date.now(),
+                        text: '처리 중...',
+                        sender: 'assistant'
+                    }];
+                });
+                return;
+            }
+
+            // 스트리밍이 끝났는지 확인
+            if (content === '<EOS>') {
+                console.log('Streaming ended, setting isStreaming to false');
+                setIsStreaming(false);
+                return;
+            }
+
+            // 스트리밍 메시지 업데이트
+            setMessages(prev => {
+                const lastMessage = prev[prev.length - 1];
+                
+                // 마지막 메시지가 assistant의 메시지이고 스트리밍 중이면 업데이트
+                if (isStreaming && lastMessage?.sender === 'assistant') {
+                    // 이전 메시지와 동일한 내용인지 확인
+                    if (lastMessage.text === content) {
+                        return prev;
+                    }
+                    return [
+                        ...prev.slice(0, -1),
+                        {
+                            id: lastMessage.id,
+                            text: content,
+                            sender: 'assistant'
+                        }
+                    ];
+                }
+                
+                // 그렇지 않으면 새 메시지 추가
+                return [...prev, {
+                    id: Date.now(),
+                    text: content,
+                    sender: 'assistant'
+                }];
+            });
+        } else if (message.type === 'error') {
+            console.log('Error received, setting isStreaming to false');
+            const errorMsg = {
+                id: Date.now(),
+                text: message.data?.message || "오류가 발생했습니다.",
+                sender: "system"
+            };
+            setMessages(prev => [...prev, errorMsg]);
+            setError(message.data?.message);
+            setIsStreaming(false);
+        }
+    });
 
     // 서버에서 채팅 기록 불러오기
     useEffect(() => {
@@ -12,7 +94,7 @@ export const useChat = (projectId) => {
                 setIsLoading(true);
                 // 기본 메시지
                 setMessages([{
-                    id: 1,
+                    id: Date.now(),
                     text: "UREKA와 자유롭게 대화해보세요!",
                     sender: "system"
                 }]);
@@ -23,7 +105,7 @@ export const useChat = (projectId) => {
                 setError(error.message);
                 // 에러 발생 시 기본 메시지 표시
                 setMessages([{
-                    id: 1,
+                    id: Date.now(),
                     text: "UREKA와 자유롭게 대화해보세요!",
                     sender: "system"
                 }]);
@@ -36,70 +118,54 @@ export const useChat = (projectId) => {
     }, [projectId]);
 
     const sendMessage = async (input) => {
-        if (input.trim() === "") return;
+        if (input.trim() === "" || isStreaming) return;
 
-        const userMsg = {
-            id: messages.length + 1,
+        const userMessage = {
+            id: Date.now(),
             text: input,
             sender: "user"
         };
 
-        // 사용자 메시지 추가
-        setMessages(prev => [...prev, userMsg]);
+        // 사용자 메시지 추가 전에 마지막 메시지 확인
+        setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            // 마지막 메시지가 같은 내용의 사용자 메시지인 경우 중복 방지
+            if (lastMessage?.text === input && lastMessage?.sender === "user") {
+                return prev;
+            }
+            return [...prev, userMessage];
+        });
 
         try {
-            // API 엔드포인트가 준비되기 전까지는 에코 메시지로 대체
-            const botMsg = {
-                id: messages.length + 2,
-                text: input,
-                sender: "bot"
+            // 서버의 ChatMessage 모델 형식에 맞춰 메시지 전송
+            const chatMessage = {
+                message: input
             };
-            setMessages(prev => [...prev, botMsg]);
-
-            // API 엔드포인트가 준비되면 아래 주석을 해제
-            /*
-            const response = await fetch(`/api/projects/${projectId}/chats`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: input,
-                    role: 'user'
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to send message');
-
-            // 서버 응답으로부터 봇 메시지 받기
-            const data = await response.json();
-            const botMsg = {
-                id: messages.length + 2,
-                text: data.message,
-                sender: "bot"
-            };
-
-            setMessages(prev => [...prev, botMsg]);
-            */
+            
+            console.log('Sending message:', chatMessage);
+            
+            // WebSocket을 통해 메시지 전송
+            sendSocketMessage(chatMessage);
             setError(null);
         } catch (error) {
             console.error('Error sending message:', error);
             setError(error.message);
             // 에러 발생 시 에코 메시지로 대체
-            const botMsg = {
-                id: messages.length + 2,
-                text: input,
-                sender: "bot"
+            const assistantMsg = {
+                id: Date.now(),
+                text: "메시지 전송에 실패했습니다. 다시 시도해주세요.",
+                sender: "assistant"
             };
-            setMessages(prev => [...prev, botMsg]);
+            setMessages(prev => [...prev, assistantMsg]);
+            setIsStreaming(false);
         }
     };
 
     const sendHint = () => {
         const hintMsg = {
-            id: messages.length + 1,
+            id: Date.now(),
             text: "이건 힌트야",
-            sender: "bot"
+            sender: "assistant"
         };
         setMessages(prev => [...prev, hintMsg]);
     };
@@ -109,6 +175,8 @@ export const useChat = (projectId) => {
         sendMessage,
         sendHint,
         isLoading,
-        error
+        error,
+        chatId,
+        isStreaming
     };
 }; 
