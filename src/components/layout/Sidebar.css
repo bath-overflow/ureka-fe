@@ -94,10 +94,15 @@
     justify-content: center;
 }
 
-.sidebar-menu li.active,
-.sidebar-menu li:hover {
+.sidebar-menu a.active,
+.sidebar-menu a.active .sidebar-icon,
+.sidebar-menu a.active .sidebar-label {
+    color: #6366f1;
+}
+
+.sidebar-menu a.active {
     background: #f4f6fa;
-    color: #2563eb;
+    border-radius: 4px;
 }
 
 .sidebar-toggle {

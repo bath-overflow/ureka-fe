@@ -1,0 +1,227 @@
+.layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.debate-root {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    background-color: #f5f7fb;
+    overflow: hidden;
+}
+
+/* 제목 */
+.debate-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+/* 서브헤더 */
+.debate-header {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+/* 전체 박스 */
+.debate-container {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 12px;
+    padding: 24px;
+    height: 100%;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+/* 캐릭터 카드 영역 */
+.debate-characters {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.character-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f4f6fa;
+    border-radius: 8px;
+    padding: 12px;
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease;
+}
+
+.character-card:hover {
+    transform: translateY(-2px);
+}
+
+.character-avatar img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.character-role {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.character-options {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+}
+
+/* 채팅 영역 */
+.debate-history {
+    flex: 1;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 메시지 박스 */
+.message-box {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-size: 14px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.message-box.friend {
+    background-color: #e9f0fc;
+}
+
+.message-box.professor {
+    background-color: #fff3cd;
+}
+
+.message-box.user {
+    background-color: #dff5e3;
+}
+
+.message-box strong {
+    font-weight: 600;
+}
+
+/* 입력창 */
+.debate-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+}
+
+.debate-input input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.send-button,
+.mic-button {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 18px;
+    padding: 6px 10px;
+    transition: background-color 0.2s;
+}
+
+.send-button:hover,
+.mic-button:hover {
+    background-color: #f0f0f0;
+}
+
+.chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* ✅ 전체 가로폭 차지 */
+}
+
+/* 정렬: user는 오른쪽, 나머지는 왼쪽 */
+.chat-wrapper.user {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.chat-wrapper.friend,
+.chat-wrapper.professor {
+    align-items: flex-start;
+    text-align: left;
+}
+
+/* 역할 이름 라벨 */
+.chat-role-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.chat-bubble {
+    max-width: 70%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-line;
+}
+
+.chat-bubble.user {
+    background: #dff5e3;
+    color: #222;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 18px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    margin-left: auto;
+}
+
+.chat-bubble.friend {
+    background: #e9f0fc;
+    color: #222;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 18px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    margin-right: auto;
+}
+
+.chat-bubble.professor {
+    background: #fff3cd;
+    color: #222;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 18px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    margin-right: auto;
+}
