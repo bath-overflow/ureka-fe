@@ -4,32 +4,126 @@
   margin: 8px 0;
   border-radius: 12px;
   word-wrap: break-word;
+  line-height: 1.5;
 }
 
 .chat-bubble.user {
   background-color: #007AFF;
   color: white;
+  margin-left: auto;
 }
 
 .chat-bubble.assistant {
   background-color: #E9ECEF;
   color: #212529;
+  margin-right: auto;
 }
 
 .chat-bubble.system {
-  background-color: #FFE8CC;
-  color: #664500;
+  background-color: #F8F9FA;
+  color: #6C757D;
+  margin: 8px auto;
+  text-align: center;
+  font-style: italic;
 }
 
-.chat-bubble.left {
-  margin-right: auto;
+/* Markdown 스타일링 */
+.chat-bubble p {
+  margin: 0;
 }
 
-.chat-bubble.right {
-  margin-left: auto;
+.chat-bubble pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
 }
 
-.chat-bubble.center {
-  margin-left: auto;
-  margin-right: auto;
+.chat-bubble code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 0.9em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.chat-bubble pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.chat-bubble ul, .chat-bubble ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.chat-bubble li {
+  margin: 4px 0;
+}
+
+.chat-bubble blockquote {
+  border-left: 4px solid rgba(0, 0, 0, 0.2);
+  margin: 8px 0;
+  padding-left: 12px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.chat-bubble a {
+  color: #007AFF;
+  text-decoration: none;
+}
+
+.chat-bubble a:hover {
+  text-decoration: underline;
+}
+
+.chat-bubble table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.chat-bubble th, .chat-bubble td {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  text-align: left;
+}
+
+.chat-bubble th {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+  .chat-bubble.assistant {
+    background-color: #2D2D2D;
+    color: #E9ECEF;
+  }
+
+  .chat-bubble.system {
+    background-color: #1A1A1A;
+    color: #ADB5BD;
+  }
+
+  .chat-bubble pre {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .chat-bubble code {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .chat-bubble blockquote {
+    border-left-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .chat-bubble th {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .chat-bubble th, .chat-bubble td {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
 } 

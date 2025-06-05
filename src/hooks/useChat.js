@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useChatSocket from './useChatSocket';
+import hintApi from '../api/rest/chatApi';
 
 export const useChat = (projectId) => {
     const [messages, setMessages] = useState([]);
@@ -7,6 +8,7 @@ export const useChat = (projectId) => {
     const [error, setError] = useState(null);
     const [chatId, setChatId] = useState(null);
     const [isStreaming, setIsStreaming] = useState(false);
+    const [isLoadingHint, setIsLoadingHint] = useState(false);
 
     const { sendMessage: sendSocketMessage } = useChatSocket((message) => {
         console.log('Received message in useChat:', message);
@@ -161,13 +163,31 @@ export const useChat = (projectId) => {
         }
     };
 
-    const sendHint = () => {
-        const hintMsg = {
-            id: Date.now(),
-            text: "이건 힌트야",
-            sender: "assistant"
-        };
-        setMessages(prev => [...prev, hintMsg]);
+    const sendHint = async () => {
+        if (!chatId || isLoadingHint) return;
+
+        try {
+            setIsLoadingHint(true);
+            const hintData = await hintApi.getHint(chatId);
+            
+            // 힌트 메시지 추가
+            const hintMsg = {
+                id: Date.now(),
+                text: hintData.hint || "힌트를 불러오는데 실패했습니다.",
+                sender: "assistant"
+            };
+            setMessages(prev => [...prev, hintMsg]);
+        } catch (error) {
+            console.error('Error fetching hint:', error);
+            const errorMsg = {
+                id: Date.now(),
+                text: "힌트를 불러오는데 실패했습니다.",
+                sender: "system"
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
+            setIsLoadingHint(false);
+        }
     };
 
     return {
@@ -177,6 +197,7 @@ export const useChat = (projectId) => {
         isLoading,
         error,
         chatId,
-        isStreaming
+        isStreaming,
+        isLoadingHint
     };
 }; 

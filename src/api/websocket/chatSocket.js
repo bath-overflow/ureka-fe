@@ -79,9 +79,11 @@ class WebSocketManager {
           this.handleMessage(message);
         } catch {
           // JSON 파싱 실패 시 서버 메시지 형식 처리
-          const [type, content] = event.data.split(':').map(str => str.trim());
+          const message = event.data;
           
-          if (type === 'connected') {
+          if (message.startsWith('connected:')) {
+            const content = message.replace('connected:', '').trim();
+            
             if (content === 'connected') {
               // 일반 연결 확인 메시지
               this.handleMessage({
@@ -90,27 +92,30 @@ class WebSocketManager {
               });
             } else if (content.startsWith('Your chat_id is:')) {
               // chat_id가 포함된 연결 메시지
-              const chatId = content.split('Your chat_id is:')[1].trim();
+              const chatId = content.replace('Your chat_id is:', '').trim();
               console.log('Extracted chat_id:', chatId);
               this.handleMessage({
                 type: 'connection_established',
                 data: { chatId }
               });
             }
-          } else if (type === 'error') {
+          } else if (message.startsWith('error:')) {
             // 에러 메시지 처리
+            const content = message.replace('error:', '').trim();
             this.handleMessage({
               type: 'error',
               data: { message: content }
             });
-          } else if (type === 'message_received') {
+          } else if (message.startsWith('message_received:')) {
             // 메시지 수신 처리
+            const content = message.replace('message_received:', '').trim();
             this.handleMessage({
               type: 'message_received',
               data: { message: content }
             });
-          } else if (type === 'send_message') {
+          } else if (message.startsWith('send_message:')) {
             // 스트리밍 메시지 처리
+            const content = message.replace('send_message:', '').trim();
             if (content === '<EOS>') {
               // 스트리밍 완료
               if (this.currentStreamMessage) {
@@ -138,7 +143,7 @@ class WebSocketManager {
             // 기타 메시지 처리
             this.handleMessage({
               type: 'text',
-              data: { text: content }
+              data: { text: message }
             });
           }
         }
