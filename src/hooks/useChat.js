@@ -88,23 +88,27 @@ export const useChat = (projectId) => {
         const fetchChatHistory = async () => {
             try {
                 setIsLoading(true);
-                // 기본 메시지
-                setMessages([{
-                    id: Date.now(),
-                    text: "UREKA와 자유롭게 대화해보세요!",
-                    sender: "system"
-                }]);
+                // 메시지가 없을 때만 기본 메시지 설정
+                if (messages.length === 0) {
+                    setMessages([{
+                        id: Date.now(),
+                        text: "UREKA와 자유롭게 대화해보세요!",
+                        sender: "system"
+                    }]);
+                }
                 setError(null);
 
             } catch (error) {
                 console.error('Error fetching chat history:', error);
                 setError(error.message);
                 // 에러 발생 시 기본 메시지 표시
-                setMessages([{
-                    id: Date.now(),
-                    text: "UREKA와 자유롭게 대화해보세요!",
-                    sender: "system"
-                }]);
+                if (messages.length === 0) {
+                    setMessages([{
+                        id: Date.now(),
+                        text: "UREKA와 자유롭게 대화해보세요!",
+                        sender: "system"
+                    }]);
+                }
             } finally {
                 setIsLoading(false);
             }

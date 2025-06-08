@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaComments, FaLayerGroup, FaBook, FaChevronLeft, FaChevronRight, FaHome } from "react-icons/fa";
+import { FaComments, FaBook, FaChevronLeft, FaChevronRight, FaHome } from "react-icons/fa";
 import "./Sidebar.css";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 
@@ -11,7 +11,6 @@ function Sidebar({ currentProjectId }) {
 
     // 경로 정의 (null 안전 처리)
     const chatPath = currentProjectId ? `/chat/project/${currentProjectId}` : null;
-    const debatePath = currentProjectId ? `/debate/project/${currentProjectId}` : null;
     const resourcesPath = currentProjectId ? `/resources/${currentProjectId}` : null;
 
     console.log("pathname:", pathname, "chatPath:", chatPath)
@@ -45,17 +44,6 @@ function Sidebar({ currentProjectId }) {
                     >
                         <FaComments className="sidebar-icon" />
                         {!collapsed && <span className="sidebar-label">Chat</span>}
-                    </NavLink>
-                </li>
-
-                <li>
-                    <NavLink
-                        to={debatePath || "#"}
-                        className={pathname === debatePath ? "active" : ""}
-                        style={!debatePath ? { pointerEvents: "none", opacity: 0.5 } : {}}
-                    >
-                        <FaLayerGroup className="sidebar-icon" />
-                        {!collapsed && <span className="sidebar-label">In-depth Debate</span>}
                     </NavLink>
                 </li>
 

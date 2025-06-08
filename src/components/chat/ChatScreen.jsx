@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import Sidebar from "../layout/Sidebar";
 import { useChat } from "../../hooks/useChat";
+import { FaComments } from "react-icons/fa";
 import ChatBubble from "./ChatBubble";
+import InDepthDebateScreen from '../debate/InDepthDebateScreen';
 import "./ChatScreen.css";
 
 function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
@@ -15,6 +16,7 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const messagesContainerRef = useRef(null);
   const isSubmitting = useRef(false);
   const [isHintLoading, setIsHintLoading] = useState(false);
+  const [isDebateModalOpen, setIsDebateModalOpen] = useState(false);
 
   const { messages, sendMessage, sendHint, isLoading, error, isStreaming, chatId } = useChat(id);
 
@@ -137,6 +139,10 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
     }
   };
 
+  const handleStartDebate = () => {
+    setIsDebateModalOpen(true);
+  };
+
   if (isLoading) {
     return <div style={{ padding: 40 }}>로딩 중...</div>;
   }
@@ -174,19 +180,31 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
         <div className="chat-box">
           <div className="chat-label">Chat</div>
           <div className="chat-messages" ref={messagesContainerRef}>
-            {messages.map((msg) => (
-              <ChatBubble
-                key={msg.id}
-                text={msg.text}
-                role={msg.sender}
-                alignment={
-                  msg.sender === "user" 
-                    ? "right" 
-                    : msg.sender === "system" 
-                      ? "center" 
-                      : "left"
-                }
-              />
+            {messages.map((msg, index) => (
+              <div key={msg.id} className="chat-message-container">
+                <div className="chat-message-content">     
+                  <ChatBubble
+                    text={msg.text}
+                    role={msg.sender}
+                    alignment={
+                      msg.sender === "user" 
+                        ? "right" 
+                        : msg.sender === "system" 
+                          ? "center" 
+                          : "left"
+                    }
+                  />
+                  {msg.sender === "assistant" && index === messages.length - 1 && (
+                    <button 
+                      className="debate-icon-button"
+                      onClick={() => handleStartDebate()}
+                      title="심층토론하기"
+                    >
+                      <FaComments />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -225,6 +243,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
           </div>
         </div>
       </div>
+      <InDepthDebateScreen
+        isOpen={isDebateModalOpen}
+        onClose={() => setIsDebateModalOpen(false)}
+        setCurrentProjectId={setCurrentProjectId}
+        projects={projects}
+      />
     </div>
   );
 }

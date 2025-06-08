@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
+import { FaTimes } from 'react-icons/fa';
 import "./InDepthDebateScreen.css";
 
-function InDepthDebateScreen({ setCurrentProjectId, projects }) {
+function InDepthDebateScreen({ isOpen, onClose, setCurrentProjectId, projects }) {
     const { projectId } = useParams();
     const [projectName, setProjectName] = useState("In-depth Debate");
 
@@ -37,46 +38,51 @@ function InDepthDebateScreen({ setCurrentProjectId, projects }) {
         }
     }, [projectId, setCurrentProjectId, projects]);
 
+    if (!isOpen) return null;
+
     return (
-        <div className="chat-root">
-            <div className="chat-main">
-
-                <h1 className="chat-title">{projectName}</h1>
-
-                <div className="chat-box">
-                    <div className="chat-label">In-depth Debate</div>
-
-                    <div className="debate-characters">
-                        {["Friend", "Professor", "User"].map(role => (
-                            <div className="character-card" key={role}>
-                                <div className="character-avatar">
-                                    <img src={`/avatars/${role.toLowerCase()}.jpg`} alt={`${role} avatar`} />
+        <div className="debate-modal-overlay" onClick={onClose}>
+            <div className="chat-root debate-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="chat-main">
+                    <div className="debate-modal-header">
+                        <h1 className="chat-title">{projectName}</h1>
+                        <button className="debate-modal-close" onClick={onClose}>
+                            <FaTimes />
+                        </button>
+                    </div>
+                    <div className="chat-box">
+                        <div className="debate-characters">
+                            {["Friend", "Professor", "User"].map(role => (
+                                <div className="character-card" key={role}>
+                                    <div className="character-avatar">
+                                        <img src={`/avatars/${role.toLowerCase()}.jpg`} alt={`${role} avatar`} />
+                                    </div>
+                                    <div className="character-role">{role}</div>
                                 </div>
-                                <div className="character-role">{role}</div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
 
-                    <div className="chat-messages">
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`chat-bubble ${msg.role}`}
-                            >
-                                {msg.message}
-                            </div>
-                        ))}
-                    </div>
+                        <div className="chat-messages">
+                            {messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`chat-bubble ${msg.role}`}
+                                >
+                                    {msg.message}
+                                </div>
+                            ))}
+                        </div>
 
-                    <div className="chat-input-area">
-                        <input
-                            className="chat-input"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="메시지를 입력하세요..."
-                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                        />
-                        <button className="chat-send-btn" onClick={handleSend}>⮞</button>
+                        <div className="chat-input-area">
+                            <input
+                                className="chat-input"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="메시지를 입력하세요..."
+                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                            />
+                            <button className="chat-send-btn" onClick={handleSend}>⮞</button>
+                        </div>
                     </div>
                 </div>
             </div>
