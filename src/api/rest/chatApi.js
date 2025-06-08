@@ -2,7 +2,6 @@
 const hintApi = {
   async getHint(chatId) {
     const url = `/api/chat/${chatId}/hint`;
-    console.log('Making API call to:', url);
     
     try {
       const response = await fetch(url, {
@@ -12,8 +11,6 @@ const hintApi = {
         },
         credentials: 'include',
       });
-
-      console.log('API Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -22,7 +19,6 @@ const hintApi = {
       }
 
       const data = await response.json();
-      console.log('API Response data:', data);
       return data;
     } catch (error) {
       console.error('API Call failed:', error);

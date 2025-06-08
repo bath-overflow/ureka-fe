@@ -11,8 +11,6 @@ export const useChat = (projectId) => {
     const [isLoadingHint, setIsLoadingHint] = useState(false);
 
     const { sendMessage: sendSocketMessage } = useChatSocket((message) => {
-        console.log('Received message in useChat:', message);
-
         if (message.type === 'chat_id') {
             setChatId(message.chat_id);
             return;
@@ -21,11 +19,9 @@ export const useChat = (projectId) => {
         // 서버로부터 받은 메시지 처리
         if (message.type === 'message_received') {
             const content = message.data?.message;
-            console.log('Received message content:', content, 'Current streaming state:', isStreaming);
 
             // 처리 중 메시지
             if (content === 'Processing your message...') {
-                console.log('Setting streaming to true');
                 setIsStreaming(true);
                 setMessages(prev => {
                     // 이미 처리 중 메시지가 있는지 확인
@@ -44,7 +40,6 @@ export const useChat = (projectId) => {
 
             // 스트리밍이 끝났는지 확인
             if (content === '<EOS>') {
-                console.log('Streaming ended, setting isStreaming to false');
                 setIsStreaming(false);
                 return;
             }
@@ -77,7 +72,6 @@ export const useChat = (projectId) => {
                 }];
             });
         } else if (message.type === 'error') {
-            console.log('Error received, setting isStreaming to false');
             const errorMsg = {
                 id: Date.now(),
                 text: message.data?.message || "오류가 발생했습니다.",
@@ -143,8 +137,6 @@ export const useChat = (projectId) => {
             const chatMessage = {
                 message: input
             };
-            
-            console.log('Sending message:', chatMessage);
             
             // WebSocket을 통해 메시지 전송
             sendSocketMessage(chatMessage);

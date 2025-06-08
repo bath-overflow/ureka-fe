@@ -19,10 +19,6 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const { messages, sendMessage, sendHint, isLoading, error, isStreaming, chatId } = useChat(id);
 
   useEffect(() => {
-    console.log('Streaming state changed:', isStreaming);
-  }, [isStreaming]);
-
-  useEffect(() => {
     setCurrentProjectId(id);
   }, [id, setCurrentProjectId]);
 
@@ -123,17 +119,11 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   };
 
   const handleHint = async () => {
-    console.log('Hint button clicked, current chatId:', chatId);
-    if (isHintLoading) {
-      console.log('Hint is already loading');
-      return;
-    }
+    if (isHintLoading) return;
     
     setIsHintLoading(true);
     try {
-      console.log('Calling sendHint with chatId:', chatId);
       await sendHint();
-      console.log('sendHint completed');
     } catch (error) {
       console.error('Error in handleHint:', error);
     } finally {
@@ -205,7 +195,6 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
               className="chat-hint-btn" 
               onClick={(e) => {
                 e.preventDefault();
-                console.log('Button clicked directly, chatId:', chatId);
                 handleHint();
               }}
               disabled={isHintLoading || !chatId}

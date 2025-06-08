@@ -39,13 +39,12 @@ class WebSocketManager {
       // 연결 타임아웃 설정
       this.connectionTimeout = setTimeout(() => {
         if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
-          console.log('Connection timeout, closing socket');
+          console.error('Connection timeout');
           this.socket.close();
         }
       }, 5000);
 
       this.socket.onopen = () => {
-        console.log('WebSocket connected');
         this.reconnectAttempts = 0;
         this.isConnecting = false;
         clearTimeout(this.connectionTimeout);
@@ -53,7 +52,6 @@ class WebSocketManager {
       };
 
       this.socket.onclose = (event) => {
-        console.log('WebSocket disconnected', event.code, event.reason);
         this.isConnecting = false;
         clearTimeout(this.connectionTimeout);
         this.stopHeartbeat();
@@ -71,8 +69,6 @@ class WebSocketManager {
       };
 
       this.socket.onmessage = (event) => {
-        console.log('Received message:', event.data);
-
         try {
           // 먼저 JSON으로 파싱 시도
           const message = JSON.parse(event.data);
@@ -93,7 +89,6 @@ class WebSocketManager {
             } else if (content.startsWith('Your chat_id is:')) {
               // chat_id가 포함된 연결 메시지
               const chatId = content.replace('Your chat_id is:', '').trim();
-              console.log('Extracted chat_id:', chatId);
               this.handleMessage({
                 type: 'connection_established',
                 data: { chatId }
@@ -177,7 +172,7 @@ class WebSocketManager {
     if (this.reconnectAttempts < this.maxReconnectAttempts && !this.isConnecting && !this.forceClose) {
       this.reconnectAttempts++;
       const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 3);
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
+      console.error(`Connection lost. Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
       setTimeout(() => {
         this.connect();
@@ -240,9 +235,8 @@ class WebSocketManager {
       const message = this.messageQueue.shift();
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         try {
-          console.log('Processing message from queue:', message);
           this.socket.send(JSON.stringify(message));
-          await new Promise(resolve => setTimeout(resolve, 100)); // 메시지 간 딜레이
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error('Error sending message from queue:', error);
         }
@@ -265,7 +259,6 @@ class WebSocketManager {
     // 마지막 메시지 전송 시간과 현재 시간을 비교
     const now = Date.now();
     if (this.lastMessageTime && now - this.lastMessageTime < 1000) {
-      console.log('Message sending too quickly, ignoring');
       return;
     }
     this.lastMessageTime = now;
@@ -277,7 +270,6 @@ class WebSocketManager {
           role: "user",
           message: data.message
         };
-        console.log('Adding message to queue:', message);
         this.messageQueue.push(message);
         this.processMessageQueue();
       } catch (error) {
