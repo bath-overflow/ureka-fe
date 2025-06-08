@@ -5,7 +5,7 @@ import { useChat } from "../../hooks/useChat";
 import ChatBubble from "./ChatBubble";
 import "./ChatScreen.css";
 
-function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProjectId }) {
+function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const { id } = useParams();
   const [input, setInput] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
@@ -14,12 +14,9 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const isSubmitting = useRef(false);
+  const [isHintLoading, setIsHintLoading] = useState(false);
 
-  const { messages, sendMessage, sendHint, isLoading, error, isStreaming } = useChat(id);
-
-  useEffect(() => {
-    console.log('Streaming state changed:', isStreaming);
-  }, [isStreaming]);
+  const { messages, sendMessage, sendHint, isLoading, error, isStreaming, chatId } = useChat(id);
 
   useEffect(() => {
     setCurrentProjectId(id);
@@ -121,8 +118,17 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
     }
   };
 
-  const handleHint = () => {
-    sendHint();
+  const handleHint = async () => {
+    if (isHintLoading) return;
+    
+    setIsHintLoading(true);
+    try {
+      await sendHint();
+    } catch (error) {
+      console.error('Error in handleHint:', error);
+    } finally {
+      setIsHintLoading(false);
+    }
   };
 
   const handleInputKeyDown = (e) => {
@@ -185,7 +191,17 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId, currentProject
             <div ref={messagesEndRef} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-            <button className="chat-hint-btn" onClick={handleHint}>HINT</button>
+            <button 
+              className="chat-hint-btn" 
+              onClick={(e) => {
+                e.preventDefault();
+                handleHint();
+              }}
+              disabled={isHintLoading || !chatId}
+              title={!chatId ? `채팅이 초기화되는 동안 기다려주세요... (chatId: ${chatId})` : ""}
+            >
+              {isHintLoading ? 'Loading...' : 'HINT'}
+            </button>
           </div>
           <div className="chat-input-area">
             <input
