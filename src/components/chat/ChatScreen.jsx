@@ -135,6 +135,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
     setInputValue(projectTitle);
   };
 
+  // 제목 수정용 핸들러 분리
+  const handleTitleChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+
   const handleInputChange = (e) => {
     if (!isSubmitting.current) {
       setInput(e.target.value);
@@ -218,7 +224,7 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
             <input
               className="chat-title-input"
               value={inputValue}
-              onChange={handleInputChange}
+              onChange={handleTitleChange}
               onBlur={handleInputBlur}
               onKeyDown={handleInputKeyDown}
               autoFocus
