@@ -17,8 +17,61 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const isSubmitting = useRef(false);
   const [isHintLoading, setIsHintLoading] = useState(false);
   const [isDebateModalOpen, setIsDebateModalOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+
 
   const { messages, sendMessage, sendHint, isLoading, error, isStreaming, chatId } = useChat(id);
+
+  const fetchedOnceRef = useRef(false);
+
+  const fetchRecommendations = async () => {
+    if (!chatId) return;
+
+    setIsLoadingRecommendations(true);
+    try {
+      const res = await fetch(`/api/chat/${chatId}/suggestions`);
+      if (!res.ok) throw new Error("추천 질문 요청 실패");
+
+      const data = await res.json();
+      console.log("[✅ 추천 질문 응답]", data);
+
+      const raw = data?.suggested_questions ?? [];
+
+      let cleaned;
+
+      // 최초 요청: 첫 문장 제거
+      if (!fetchedOnceRef.current) {
+        fetchedOnceRef.current = true;
+        cleaned = raw.length > 1 ? raw.slice(1) : [];
+      } else {
+        cleaned = raw;
+      }
+
+      const questions = cleaned.filter(q =>
+        typeof q === "string" &&
+        q.trim().length > 0 &&
+        (q.includes('?') || q.endsWith('?'))
+      );
+
+      setRecommendations(questions);
+
+    } catch (error) {
+      console.error("추천 질문 요청 중 오류:", error);
+      setRecommendations([]);
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  };
+
+  // ✅ 메시지가 변경될 때마다 추천 질문 요청
+  useEffect(() => {
+    if (chatId && messages.length > 0) {
+      fetchRecommendations();
+    }
+  }, [chatId, messages.length]);
+
+
 
   useEffect(() => {
     setCurrentProjectId(id);
@@ -56,14 +109,14 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (isSubmitting.current || !input.trim() || isStreaming) return;
-    
+
     isSubmitting.current = true;
     const messageToSend = input.trim();
     setInput('');
     sendMessage(messageToSend);
-    
+
     // 다음 메시지 전송을 위해 약간의 딜레이 후 플래그 해제
     setTimeout(() => {
       isSubmitting.current = false;
@@ -122,7 +175,7 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
 
   const handleHint = async () => {
     if (isHintLoading) return;
-    
+
     setIsHintLoading(true);
     try {
       await sendHint();
@@ -132,6 +185,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
       setIsHintLoading(false);
     }
   };
+
+  const handleRecommendedClick = (question) => {
+    setInput('');
+    sendMessage(question); // ✅ 기존 메시지 전송 로직 재사용
+  };
+
 
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -182,20 +241,20 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
           <div className="chat-messages" ref={messagesContainerRef}>
             {messages.map((msg, index) => (
               <div key={msg.id} className="chat-message-container">
-                <div className="chat-message-content">     
+                <div className="chat-message-content">
                   <ChatBubble
                     text={msg.text}
                     role={msg.sender}
                     alignment={
-                      msg.sender === "user" 
-                        ? "right" 
-                        : msg.sender === "system" 
-                          ? "center" 
+                      msg.sender === "user"
+                        ? "right"
+                        : msg.sender === "system"
+                          ? "center"
                           : "left"
                     }
                   />
                   {msg.sender === "assistant" && index === messages.length - 1 && (
-                    <button 
+                    <button
                       className="debate-icon-button"
                       onClick={() => handleStartDebate()}
                       title="심층토론하기"
@@ -209,8 +268,8 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
             <div ref={messagesEndRef} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-            <button 
-              className="chat-hint-btn" 
+            <button
+              className="chat-hint-btn"
               onClick={(e) => {
                 e.preventDefault();
                 handleHint();
@@ -230,17 +289,29 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
               onKeyDown={handleKeyDown}
               disabled={isStreaming || isSubmitting.current}
             />
-            <button 
-              className="chat-send-btn" 
+            <button
+              className="chat-send-btn"
               onClick={handleSubmit}
               disabled={isStreaming || isSubmitting.current}
             >⮞</button>
           </div>
           <div className="chat-bottom-buttons">
-            <button disabled>추천질문1</button>
-            <button disabled>추천질문2</button>
-            <button disabled>추천질문3</button>
+            {isLoadingRecommendations ? (
+              <div>추천 질문 불러오는 중...</div>
+            ) : recommendations.length > 0 ? (
+              recommendations.map((question, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleRecommendedClick(question)}
+                >
+                  {question}
+                </button>
+              ))
+            ) : (
+              <div>추천 질문이 없습니다.</div>
+            )}
           </div>
+
         </div>
       </div>
       <InDepthDebateScreen
