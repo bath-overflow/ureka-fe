@@ -246,8 +246,7 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
       <InDepthDebateScreen
         isOpen={isDebateModalOpen}
         onClose={() => setIsDebateModalOpen(false)}
-        setCurrentProjectId={setCurrentProjectId}
-        projects={projects}
+        chatId={chatId}
       />
     </div>
   );

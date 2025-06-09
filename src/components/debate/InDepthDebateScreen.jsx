@@ -1,42 +1,91 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import useDebateSocket from '../../hooks/useDebateSocket';
 import "./InDepthDebateScreen.css";
 
-function InDepthDebateScreen({ isOpen, onClose, setCurrentProjectId, projects }) {
-    const { projectId } = useParams();
-    const [projectName, setProjectName] = useState("In-depth Debate");
-
-    // ✅ 추가된 상태 및 로직
+function InDepthDebateScreen({ isOpen, onClose, chatId }) {
     const [messages, setMessages] = useState([
         { id: 1, role: "friend", message: "오늘 수업에서 다룬 CPU time 이해가 안 돼" },
-        { id: 2, role: "user", message: "CPU Clock Cycles와 Instruction Count의 곱이야!" },
-        { id: 3, role: "professor", message: "다시 생각해보면 좋을 것 같아" },
     ]);
     const [input, setInput] = useState("");
+    const [isStreaming, setIsStreaming] = useState(false);
+
+    const { connect, disconnect, sendMessage, isConnected } = useDebateSocket((message) => {
+        if (message.type === 'message_received') {
+            const content = message.data?.message;
+
+            // 처리 중 메시지
+            if (content === 'Processing your message...') {
+                setIsStreaming(true);
+                return;
+            }
+
+            // 스트리밍이 끝났는지 확인
+            if (content === '<EOS>') {
+                setIsStreaming(false);
+                return;
+            }
+
+            // 새로운 메시지 추가
+            setMessages(prev => [...prev, {
+                id: Date.now(),
+                role: "assistant",
+                message: content
+            }]);
+        } else if (message.type === 'connection_established') {
+            console.log('Connection established with chatId:', message.data?.chatId);
+        } else if (message.type === 'error') {
+            console.error('WebSocket error:', message.data?.message);
+        }
+    });
+
+    // 모달이 열릴 때 연결하고, 닫힐 때 연결 해제
+    useEffect(() => {
+        if (isOpen && chatId) {
+            console.log('Modal opened, connecting to debate socket...');
+            connect(chatId);
+        }
+        return () => {
+            if (isOpen) {
+                console.log('Modal closing, disconnecting from debate socket...');
+                disconnect();
+            }
+        };
+    }, [isOpen, chatId, connect, disconnect]);
+
+    // 연결 상태 변경 감지
+    useEffect(() => {
+        console.log('Debate socket connection status:', isConnected);
+        if (!isConnected && isOpen) {
+            setMessages(prev => [...prev, {
+                id: Date.now(),
+                role: "system",
+                message: "연결이 끊어졌습니다. 다시 연결을 시도합니다..."
+            }]);
+        }
+    }, [isConnected, isOpen]);
 
     const handleSend = () => {
-        if (!input.trim()) return;
+        if (!input.trim() || isStreaming || !isConnected) {
+            console.log('Cannot send message:', { 
+                isEmpty: !input.trim(), 
+                isStreaming, 
+                isConnected 
+            });
+            return;
+        }
 
         const newMsg = {
-            id: messages.length + 1,
+            id: Date.now(),
             role: "user",
             message: input.trim()
         };
 
-        setMessages([...messages, newMsg]);
+        console.log('Sending message:', newMsg);
+        setMessages(prev => [...prev, newMsg]);
+        sendMessage(newMsg);
         setInput("");
     };
-
-    useEffect(() => {
-        if (projectId) {
-            setCurrentProjectId(projectId);
-            const project = projects?.find(p => String(p.id) === String(projectId));
-            if (project?.title) {
-                setProjectName(project.title);
-            }
-        }
-    }, [projectId, setCurrentProjectId, projects]);
 
     if (!isOpen) return null;
 
@@ -45,7 +94,7 @@ function InDepthDebateScreen({ isOpen, onClose, setCurrentProjectId, projects })
             <div className="chat-root debate-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="chat-main">
                     <div className="debate-modal-header">
-                        <h1 className="chat-title">{projectName}</h1>
+                        <h1 className="chat-title">In-depth Debate</h1>
                         <button className="debate-modal-close" onClick={onClose}>
                             <FaTimes />
                         </button>
@@ -78,10 +127,17 @@ function InDepthDebateScreen({ isOpen, onClose, setCurrentProjectId, projects })
                                 className="chat-input"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="메시지를 입력하세요..."
+                                placeholder={isConnected ? "메시지를 입력하세요..." : "연결 중..."}
                                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                                disabled={isStreaming || !isConnected}
                             />
-                            <button className="chat-send-btn" onClick={handleSend}>⮞</button>
+                            <button 
+                                className="chat-send-btn" 
+                                onClick={handleSend}
+                                disabled={isStreaming || !isConnected}
+                            >
+                                ⮞
+                            </button>
                         </div>
                     </div>
                 </div>

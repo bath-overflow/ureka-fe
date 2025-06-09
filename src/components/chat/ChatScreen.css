@@ -248,7 +248,7 @@
 
 .chat-message-content {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 4px;
   position: relative;
 }
@@ -313,10 +313,8 @@
   transition: all 0.2s;
   flex-shrink: 0;
   margin: 0;
-  position: absolute;
-  right: -24px;
-  top: 50%;
-  transform: translateY(-50%);
+  align-self: flex-end;
+  margin-top: 4px;
 }
 
 .debate-icon-button:hover {
