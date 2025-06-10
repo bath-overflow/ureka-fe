@@ -5,6 +5,7 @@ import { FaComments } from "react-icons/fa";
 import ChatBubble from "./ChatBubble";
 import InDepthDebateScreen from '../debate/InDepthDebateScreen';
 import "./ChatScreen.css";
+import chatApi from "../../api/rest/chatApi";
 
 function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const { id } = useParams();
@@ -30,17 +31,12 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
 
     setIsLoadingRecommendations(true);
     try {
-      const res = await fetch(`/api/chat/${chatId}/suggestions`);
-      if (!res.ok) throw new Error("추천 질문 요청 실패");
-
-      const data = await res.json();
+      const data = await chatApi.getSuggestions(chatId); // ⬅️ 변경된 부분
       console.log("[✅ 추천 질문 응답]", data);
 
       const raw = data?.suggested_questions ?? [];
 
       let cleaned;
-
-      // 최초 요청: 첫 문장 제거
       if (!fetchedOnceRef.current) {
         fetchedOnceRef.current = true;
         cleaned = raw.length > 1 ? raw.slice(1) : [];
@@ -55,7 +51,6 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
       );
 
       setRecommendations(questions);
-
     } catch (error) {
       console.error("추천 질문 요청 중 오류:", error);
       setRecommendations([]);

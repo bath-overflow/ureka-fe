@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import useChatSocket from './useChatSocket';
-import hintApi from '../api/rest/chatApi';
+import chatApi from '../api/rest/chatApi';
 
 export const useChat = (projectId) => {
     const [messages, setMessages] = useState([]);
@@ -47,7 +47,7 @@ export const useChat = (projectId) => {
             // 스트리밍 메시지 업데이트
             setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
-                
+
                 // 마지막 메시지가 assistant의 메시지이고 스트리밍 중이면 업데이트
                 if (isStreaming && lastMessage?.sender === 'assistant') {
                     // 이전 메시지와 동일한 내용인지 확인
@@ -63,7 +63,7 @@ export const useChat = (projectId) => {
                         }
                     ];
                 }
-                
+
                 // 그렇지 않으면 새 메시지 추가
                 return [...prev, {
                     id: Date.now(),
@@ -141,7 +141,7 @@ export const useChat = (projectId) => {
             const chatMessage = {
                 message: input
             };
-            
+
             // WebSocket을 통해 메시지 전송
             sendSocketMessage(chatMessage);
             setError(null);
@@ -164,8 +164,8 @@ export const useChat = (projectId) => {
 
         try {
             setIsLoadingHint(true);
-            const hintData = await hintApi.getHint(chatId);
-            
+            const hintData = await chatApi.getHint(chatId);
+
             // 힌트 메시지 추가
             const hintMsg = {
                 id: Date.now(),
