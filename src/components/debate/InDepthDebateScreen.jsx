@@ -50,9 +50,8 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
             const content = message.data?.message;
             const role = message.data?.role;
 
-            console.log(role, content)
+
             if (role !== undefined) {
-                console.log("role 바꿈")
                 const newRole = role.toLowerCase();
                 setCurrentRole(newRole);
                 lastRole.current = newRole;
