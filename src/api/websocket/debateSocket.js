@@ -25,13 +25,6 @@ class DebateSocketManager {
       this.isConnecting = true;
       this.currentChatId = chatId;
       
-      // 이미 연결되어 있고 같은 chatId를 사용 중이면 재연결하지 않음
-      if (this.socket && this.socket.readyState === WebSocket.OPEN && this.currentChatId === chatId) {
-        console.log('Already connected with the same chatId:', chatId);
-        this.isConnecting = false;
-        return;
-      }
-      
       // 이전 소켓이 있다면 정리
       if (this.socket) {
         this.socket.onclose = null;
@@ -41,6 +34,15 @@ class DebateSocketManager {
         this.socket.close();
         this.socket = null;
       }
+
+      // 소켓 상태 초기화
+      this.reconnectAttempts = 0;
+      this.isConnecting = false;
+      this.forceClose = false;
+      this.currentStreamMessage = '';
+      this.lastMessageTime = null;
+      this.messageQueue = [];
+      this.isProcessingQueue = false;
 
       const url = `${API_BASE_URL}/ws/debate/${chatId}`;
       this.socket = new WebSocket(url);
@@ -88,7 +90,6 @@ class DebateSocketManager {
           this.handleMessage(message);
         } catch {
           const message = event.data;
-          console.log('Received raw message:', message);
           
           if (message.startsWith('error:')) {
             const content = message.replace('error:', '').trim();
@@ -105,41 +106,34 @@ class DebateSocketManager {
           } else if (message.startsWith('send_message:')) {
             const content = message.replace('send_message:', '').trim();
             if (content === '<EOS>') {
-              if (this.currentStreamMessage) {
-                this.handleMessage({
-                  type: 'message_received',
-                  data: { message: this.currentStreamMessage }
-                });
-                this.currentStreamMessage = '';
-              }
               this.handleMessage({
                 type: 'message_received',
                 data: { message: '<EOS>' }
               });
             } else {
-              this.currentStreamMessage += content;
+              this.handleMessage({
+                type: 'message_received',
+                data: { message: content }
+              });
             }
           } else if (message.startsWith('connected:')) {
             const content = message.replace('connected:', '').trim();
             console.log('Received connection message:', content);
             
             if (content === 'connected') {
-              // 일반 연결 확인 메시지
               this.handleMessage({
                 type: 'connection_established',
                 data: { chatId: this.currentChatId }
               });
             } else if (content.startsWith('Your chat_id is:')) {
-              // debate_chat_id가 포함된 연결 메시지
               const debateChatId = content.replace('Your chat_id is:', '').trim();
-              this.currentChatId = debateChatId; // debate_chat_id로 업데이트
+              this.currentChatId = debateChatId;
               this.handleMessage({
                 type: 'connection_established',
                 data: { chatId: debateChatId }
               });
             }
           } else {
-            // Handle raw messages from server
             this.handleMessage({
               type: 'message_received',
               data: { message }
@@ -302,6 +296,8 @@ class DebateSocketManager {
   }
 }
 
+// 싱글톤 인스턴스도 export
 const debateSocketManager = new DebateSocketManager();
 
+export { DebateSocketManager, debateSocketManager };
 export default debateSocketManager; 
