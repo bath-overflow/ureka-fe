@@ -1,42 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import useDebateSocket from '../../hooks/useDebateSocket';
 import "./InDepthDebateScreen.css";
 
 function InDepthDebateScreen({ isOpen, onClose, chatId }) {
-    const [messages, setMessages] = useState([
-       
-    ]);
+    const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
-    const [isStreaming, setIsStreaming] = useState(false);
-    const [typingRole, setTypingRole] = useState(null);
+    const messagesEndRef = useRef(null);
+    const messageCounter = useRef(0);
+    const [currentRole, setCurrentRole] = useState("friend");
+    const lastRole = useRef("friend");
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    // 메시지가 추가될 때마다 스크롤
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const processMessage = (content, role) => {
+        if (content && content !== '<EOS>' && content !== 'Processing your message...') {
+            setMessages(prev => {
+                const lastMessage = prev[prev.length - 1];
+                if (lastMessage && lastMessage.role === role) {
+                    // 마지막 메시지와 같은 역할이면 메시지를 합침
+                    const updatedMessages = [...prev];
+                    updatedMessages[prev.length - 1] = {
+                        ...lastMessage,
+                        message: lastMessage.message + content
+                    };
+                    return updatedMessages;
+                } else {
+                    // 다른 역할이면 새로운 메시지 추가
+                    return [...prev, {
+                        id: `${Date.now()}-${messageCounter.current++}`,
+                        role: role,
+                        message: content
+                    }];
+                }
+            });
+        }
+    };
 
     const { connect, disconnect, sendMessage, isConnected } = useDebateSocket((message) => {
         if (message.type === 'message_received') {
             const content = message.data?.message;
             const role = message.data?.role;
 
-            // 처리 중 메시지
-            if (content === 'Processing your message...') {
-                setIsStreaming(true);
-                setTypingRole(role || "assistant");
-                return;
-            }
 
-            // 스트리밍이 끝났는지 확인
-            if (content === '<EOS>') {
-                setIsStreaming(false);
-                setTypingRole(null);
-                return;
+            if (role !== undefined) {
+                const newRole = role.toLowerCase();
+                setCurrentRole(newRole);
+                lastRole.current = newRole;
+                if (content) {
+                    processMessage(content, newRole);
+                }
+            } else if (content) {
+                processMessage(content, lastRole.current);
             }
-
-            // 새로운 메시지 추가
-            setMessages(prev => [...prev, {
-                id: Date.now(),
-                role: role || "assistant",
-                message: content
-            }]);
         } else if (message.type === 'connection_established') {
             console.log('Connection established with chatId:', message.data?.chatId);
         } else if (message.type === 'error') {
@@ -44,65 +68,78 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
         }
     });
 
-    // 모달이 열릴 때 연결하고, 닫힐 때 연결 해제
     useEffect(() => {
         if (isOpen && chatId) {
             console.log('Modal opened, connecting to debate socket...');
             connect(chatId);
         }
         return () => {
-            console.log('Modal closing, disconnecting from debate socket...');
-            disconnect();
-            setMessages([]); // 채팅 초기화
-            setInput(""); // 입력창 초기화
-            setIsStreaming(false); // 스트리밍 상태 초기화
-            setTypingRole(null); // 타이핑 상태 초기화
+            if (isOpen) {
+                console.log('Modal closing, disconnecting from debate socket...');
+                disconnect();
+                setMessages([]); // 채팅 초기화
+                setInput(""); // 입력창 초기화
+                messageCounter.current = 0;
+                setCurrentRole("friend");
+                lastRole.current = "friend";
+            }
         };
-    }, [isOpen, chatId, connect, disconnect]);
+    }, [isOpen, chatId]);
 
-    // 연결 상태 변경 감지
-    useEffect(() => {
-        console.log('Debate socket connection status:', isConnected);
-        if (!isConnected && isOpen) {
-            setMessages(prev => [...prev, {
-                id: Date.now(),
-                role: "system",
-                message: "연결이 끊어졌습니다. 다시 연결을 시도합니다..."
-            }]);
+    const handleSend = (e) => {
+        // 이벤트가 있으면 기본 동작 방지
+        if (e) {
+            e.preventDefault();
         }
-    }, [isConnected, isOpen]);
 
-    const handleSend = () => {
-        if (!input.trim() || isStreaming || !isConnected) {
+        if (!input.trim() || !isConnected) {
             console.log('Cannot send message:', { 
                 isEmpty: !input.trim(), 
-                isStreaming, 
                 isConnected 
             });
             return;
         }
 
+        const trimmedInput = input.trim();
+        setInput(""); // 먼저 입력창을 비움
+
+        // UI에 표시할 메시지 (id 포함)
         const newMsg = {
-            id: Date.now(),
+            id: `${Date.now()}-${messageCounter.current++}`,
             role: "user",
-            message: input.trim()
+            message: trimmedInput
         };
 
-        console.log('Sending message:', newMsg);
+        // 서버로 보낼 메시지 (id 제외)
+        const messageToSend = {
+            role: "user",
+            message: trimmedInput
+        };
+
+        console.log('Sending message:', messageToSend);
         setMessages(prev => [...prev, newMsg]);
-        sendMessage(newMsg);
-        setInput("");
+        sendMessage(messageToSend);
+    };
+
+    const handleClose = () => {
+        disconnect(); // 소켓 연결 해제
+        setMessages([]); // 채팅 초기화
+        setInput(""); // 입력창 초기화
+        messageCounter.current = 0;
+        setCurrentRole("friend");
+        lastRole.current = "friend";
+        onClose(); // 모달 닫기
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="debate-modal-overlay" onClick={onClose}>
+        <div className="debate-modal-overlay" onClick={handleClose}>
             <div className="chat-root debate-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="chat-main">
                     <div className="debate-modal-header">
                         <h1 className="chat-title">In-depth Debate</h1>
-                        <button className="debate-modal-close" onClick={onClose}>
+                        <button className="debate-modal-close" onClick={handleClose}>
                             <FaTimes />
                         </button>
                     </div>
@@ -129,15 +166,7 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
                                     </ReactMarkdown>
                                 </div>
                             ))}
-                            {typingRole && (
-                                <div className={`chat-bubble ${typingRole} typing`}>
-                                    <div className="typing-indicator">
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                    </div>
-                                </div>
-                            )}
+                            <div ref={messagesEndRef} />
                         </div>
 
                         <div className="chat-input-area">
@@ -146,13 +175,18 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={isConnected ? "메시지를 입력하세요..." : "연결 중..."}
-                                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                                disabled={isStreaming || !isConnected}
+                                onKeyPress={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend(e);
+                                    }
+                                }}
+                                disabled={!isConnected}
                             />
                             <button 
                                 className="chat-send-btn" 
-                                onClick={handleSend}
-                                disabled={isStreaming || !isConnected}
+                                onClick={(e) => handleSend(e)}
+                                disabled={!isConnected}
                             >
                                 ⮞
                             </button>

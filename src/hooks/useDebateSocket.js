@@ -1,19 +1,21 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import debateSocketManager from '../api/websocket/debateSocket';
+import { DebateSocketManager } from '../api/websocket/debateSocket';
 
 const useDebateSocket = (onMessageReceived) => {
   const messageQueue = useRef([]);
   const isComponentMounted = useRef(true);
-  const currentStreamMessage = useRef('');
   const lastMessageTime = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
-  const isStreaming = useRef(false);
+  const socketManagerRef = useRef(null);
 
   const parseMessageRole = (content) => {
-    const roleMatch = content.match(/^\[(FRIEND|PROFESSOR|USER)\]/);
+    const roleMatch = content.match(/^\[(FRIEND|MODERATOR|USER)\]/);
     if (roleMatch) {
+      const role = roleMatch[1].toLowerCase();
+      // MODERATOR를 professor로 변환
+      const displayRole = role === 'moderator' ? 'professor' : role;
       return {
-        role: roleMatch[1].toLowerCase(),
+        role: displayRole,
         message: content.slice(roleMatch[0].length).trim()
       };
     }
@@ -37,32 +39,24 @@ const useDebateSocket = (onMessageReceived) => {
     if (!isComponentMounted.current) return;
 
     try {
-      console.log('Handling message in useDebateSocket:', message);
-
       if (message.type === 'connection_established') {
-        console.log('Connection established with chatId:', message.data?.chatId);
         setIsConnected(true);
         return;
       }
 
-      // 스트리밍 메시지 처리
       if (message.type === 'message_received') {
         const content = message.data?.message;
-        console.log('Received message:', content);
         
         // 연결 메시지 처리
         if (content && content.startsWith('connected:')) {
           const connectionContent = content.replace('connected:', '').trim();
           if (connectionContent === 'connected' || connectionContent.startsWith('Your chat_id is:')) {
-            console.log('Received connection confirmation');
             setIsConnected(true);
             return;
           }
         }
-        
+
         if (content === 'Processing your message...') {
-          isStreaming.current = true;
-          currentStreamMessage.current = '';
           messageQueue.current.push({
             type: 'message_received',
             data: { message: content }
@@ -72,51 +66,16 @@ const useDebateSocket = (onMessageReceived) => {
         }
 
         if (content === '<EOS>') {
-          isStreaming.current = false;
-          if (currentStreamMessage.current) {
-            const parsedMessage = parseMessageRole(currentStreamMessage.current);
-            if (parsedMessage) {
-              messageQueue.current.push({
-                type: 'message_received',
-                data: { 
-                  message: parsedMessage.message,
-                  role: parsedMessage.role
-                }
-              });
-            } else {
-              messageQueue.current.push({
-                type: 'message_received',
-                data: { message: currentStreamMessage.current }
-              });
-            }
-          }
           messageQueue.current.push({
             type: 'message_received',
             data: { message: '<EOS>' }
           });
-          currentStreamMessage.current = '';
           processMessageQueue();
           return;
         }
 
-        if (content && isStreaming.current) {
-          // send_message: 형식 처리
-          if (content.startsWith('send_message:')) {
-            const actualContent = content.replace('send_message:', '').trim();
-            if (actualContent) {
-              currentStreamMessage.current += actualContent;
-            }
-          } else if (content.startsWith('[')) {
-            // role 태그가 있는 메시지는 누적만
-            currentStreamMessage.current = content;
-          } else {
-            currentStreamMessage.current += content;
-          }
-          return;
-        }
-
-        // 스트리밍이 아닌 일반 메시지 처리
-        if (content && !isStreaming.current) {
+        // 일반 메시지 처리
+        if (content) {
           const parsedMessage = parseMessageRole(content);
           if (parsedMessage) {
             messageQueue.current.push({
@@ -139,8 +98,6 @@ const useDebateSocket = (onMessageReceived) => {
 
       // 에러 메시지 처리
       if (message.type === 'error') {
-        console.error('Received error message:', message.data?.message);
-        // chatSocket의 에러는 무시
         if (message.data?.message?.includes('Invalid message data')) {
           return;
         }
@@ -167,7 +124,6 @@ const useDebateSocket = (onMessageReceived) => {
 
   const handleError = useCallback((error) => {
     if (!isComponentMounted.current) return;
-    // chatSocket의 에러는 무시
     if (error?.data?.message?.includes('Invalid message data')) {
       return;
     }
@@ -176,79 +132,75 @@ const useDebateSocket = (onMessageReceived) => {
 
   const handleDisconnect = useCallback(() => {
     if (!isComponentMounted.current) return;
-    console.log('WebSocket disconnected');
     setIsConnected(false);
   }, []);
 
   const handleConnect = useCallback(() => {
     if (!isComponentMounted.current) return;
-    console.log('WebSocket connected');
     setIsConnected(true);
   }, []);
 
   const connect = useCallback((chatId) => {
-    if (isComponentMounted.current && !isConnected) {
-      console.log('Connecting to debate socket with chatId:', chatId);
-      debateSocketManager.connect(chatId);
+    if (isComponentMounted.current) {
+      if (socketManagerRef.current) {
+        socketManagerRef.current.disconnect();
+      }
+      socketManagerRef.current = new DebateSocketManager();
+      
+      socketManagerRef.current.on('connection_established', handleMessage);
+      socketManagerRef.current.on('message_received', handleMessage);
+      socketManagerRef.current.on('error', handleError);
+      socketManagerRef.current.on('disconnect', handleDisconnect);
+      socketManagerRef.current.on('connect', handleConnect);
+      socketManagerRef.current.on('text', handleMessage);
+
+      socketManagerRef.current.connect(chatId);
     }
-  }, [isConnected]);
+  }, [handleMessage, handleError, handleDisconnect, handleConnect]);
 
   const disconnect = useCallback(() => {
-    if (isComponentMounted.current && isConnected) {
-      console.log('Disconnecting from debate socket');
-      debateSocketManager.disconnect();
+    if (isComponentMounted.current && socketManagerRef.current) {
+      socketManagerRef.current.disconnect();
+      socketManagerRef.current = null;
       setIsConnected(false);
     }
-  }, [isConnected]);
+  }, []);
 
   const sendMessage = useCallback((message) => {
-    if (!debateSocketManager || !isConnected) {
+    if (!socketManagerRef.current || !isConnected) {
       console.error('WebSocket is not connected');
       return;
     }
 
     const now = Date.now();
     if (lastMessageTime.current && now - lastMessageTime.current < 1000) {
-      console.log('Message sending too quickly, ignoring');
       return;
     }
     lastMessageTime.current = now;
 
-    console.log('Sending message to server:', message);
-    debateSocketManager.send('message', { message: message.message });
+    const messageToSend = {
+      role: message.role,
+      message: message.message
+    };
+
+    socketManagerRef.current.socket.send(JSON.stringify(messageToSend));
   }, [isConnected]);
 
   useEffect(() => {
     isComponentMounted.current = true;
 
-    // 이벤트 핸들러 등록
-    debateSocketManager.on('connection_established', handleMessage);
-    debateSocketManager.on('message_received', handleMessage);
-    debateSocketManager.on('error', handleError);
-    debateSocketManager.on('disconnect', handleDisconnect);
-    debateSocketManager.on('connect', handleConnect);
-    debateSocketManager.on('text', handleMessage);
-
-    // 초기 연결 상태 확인
-    if (debateSocketManager.socket?.readyState === WebSocket.OPEN) {
-      setIsConnected(true);
-    }
-
     return () => {
       isComponentMounted.current = false;
       
-      // 이벤트 핸들러 제거
-      debateSocketManager.off('connection_established', handleMessage);
-      debateSocketManager.off('message_received', handleMessage);
-      debateSocketManager.off('error', handleError);
-      debateSocketManager.off('disconnect', handleDisconnect);
-      debateSocketManager.off('connect', handleConnect);
-      debateSocketManager.off('text', handleMessage);
+      if (socketManagerRef.current) {
+        socketManagerRef.current.disconnect();
+        socketManagerRef.current = null;
+      }
       
       messageQueue.current = [];
-      currentStreamMessage.current = '';
+      setIsConnected(false);
     };
-  }, [handleMessage, handleError, handleDisconnect, handleConnect]);
+  }, []);
 
   return {
     connect,
