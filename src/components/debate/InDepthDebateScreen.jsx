@@ -1,35 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
 import useDebateSocket from '../../hooks/useDebateSocket';
 import "./InDepthDebateScreen.css";
 
 function InDepthDebateScreen({ isOpen, onClose, chatId }) {
     const [messages, setMessages] = useState([
-        { id: 1, role: "friend", message: "오늘 수업에서 다룬 CPU time 이해가 안 돼" },
+       
     ]);
     const [input, setInput] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
+    const [typingRole, setTypingRole] = useState(null);
 
     const { connect, disconnect, sendMessage, isConnected } = useDebateSocket((message) => {
         if (message.type === 'message_received') {
             const content = message.data?.message;
+            const role = message.data?.role;
 
             // 처리 중 메시지
             if (content === 'Processing your message...') {
                 setIsStreaming(true);
+                setTypingRole(role || "assistant");
                 return;
             }
 
             // 스트리밍이 끝났는지 확인
             if (content === '<EOS>') {
                 setIsStreaming(false);
+                setTypingRole(null);
                 return;
             }
 
             // 새로운 메시지 추가
             setMessages(prev => [...prev, {
                 id: Date.now(),
-                role: "assistant",
+                role: role || "assistant",
                 message: content
             }]);
         } else if (message.type === 'connection_established') {
@@ -46,10 +51,12 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
             connect(chatId);
         }
         return () => {
-            if (isOpen) {
-                console.log('Modal closing, disconnecting from debate socket...');
-                disconnect();
-            }
+            console.log('Modal closing, disconnecting from debate socket...');
+            disconnect();
+            setMessages([]); // 채팅 초기화
+            setInput(""); // 입력창 초기화
+            setIsStreaming(false); // 스트리밍 상태 초기화
+            setTypingRole(null); // 타이핑 상태 초기화
         };
     }, [isOpen, chatId, connect, disconnect]);
 
@@ -117,9 +124,20 @@ function InDepthDebateScreen({ isOpen, onClose, chatId }) {
                                     key={msg.id}
                                     className={`chat-bubble ${msg.role}`}
                                 >
-                                    {msg.message}
+                                    <ReactMarkdown>
+                                        {msg.message}
+                                    </ReactMarkdown>
                                 </div>
                             ))}
+                            {typingRole && (
+                                <div className={`chat-bubble ${typingRole} typing`}>
+                                    <div className="typing-indicator">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="chat-input-area">

@@ -7,6 +7,18 @@ const useDebateSocket = (onMessageReceived) => {
   const currentStreamMessage = useRef('');
   const lastMessageTime = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
+  const isStreaming = useRef(false);
+
+  const parseMessageRole = (content) => {
+    const roleMatch = content.match(/^\[(FRIEND|PROFESSOR|USER)\]/);
+    if (roleMatch) {
+      return {
+        role: roleMatch[1].toLowerCase(),
+        message: content.slice(roleMatch[0].length).trim()
+      };
+    }
+    return null;
+  };
 
   const processMessageQueue = useCallback(() => {
     if (!isComponentMounted.current) return;
@@ -49,6 +61,8 @@ const useDebateSocket = (onMessageReceived) => {
         }
         
         if (content === 'Processing your message...') {
+          isStreaming.current = true;
+          currentStreamMessage.current = '';
           messageQueue.current.push({
             type: 'message_received',
             data: { message: content }
@@ -58,11 +72,23 @@ const useDebateSocket = (onMessageReceived) => {
         }
 
         if (content === '<EOS>') {
+          isStreaming.current = false;
           if (currentStreamMessage.current) {
-            messageQueue.current.push({
-              type: 'message_received',
-              data: { message: currentStreamMessage.current }
-            });
+            const parsedMessage = parseMessageRole(currentStreamMessage.current);
+            if (parsedMessage) {
+              messageQueue.current.push({
+                type: 'message_received',
+                data: { 
+                  message: parsedMessage.message,
+                  role: parsedMessage.role
+                }
+              });
+            } else {
+              messageQueue.current.push({
+                type: 'message_received',
+                data: { message: currentStreamMessage.current }
+              });
+            }
           }
           messageQueue.current.push({
             type: 'message_received',
@@ -73,12 +99,39 @@ const useDebateSocket = (onMessageReceived) => {
           return;
         }
 
-        if (content) {
-          currentStreamMessage.current = content;
-          messageQueue.current.push({
-            type: 'message_received',
-            data: { message: currentStreamMessage.current }
-          });
+        if (content && isStreaming.current) {
+          // send_message: 형식 처리
+          if (content.startsWith('send_message:')) {
+            const actualContent = content.replace('send_message:', '').trim();
+            if (actualContent) {
+              currentStreamMessage.current += actualContent;
+            }
+          } else if (content.startsWith('[')) {
+            // role 태그가 있는 메시지는 누적만
+            currentStreamMessage.current = content;
+          } else {
+            currentStreamMessage.current += content;
+          }
+          return;
+        }
+
+        // 스트리밍이 아닌 일반 메시지 처리
+        if (content && !isStreaming.current) {
+          const parsedMessage = parseMessageRole(content);
+          if (parsedMessage) {
+            messageQueue.current.push({
+              type: 'message_received',
+              data: { 
+                message: parsedMessage.message,
+                role: parsedMessage.role
+              }
+            });
+          } else {
+            messageQueue.current.push({
+              type: 'message_received',
+              data: { message: content }
+            });
+          }
           processMessageQueue();
         }
         return;
