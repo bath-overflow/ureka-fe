@@ -156,7 +156,11 @@ class WebSocketManager {
     this.stopHeartbeat();
     this.heartbeatInterval = setInterval(() => {
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-        this.send('ping', { timestamp: Date.now() });
+        try {
+          this.socket.send(JSON.stringify({ type: 'ping' }));
+        } catch (error) {
+          console.error('Error sending heartbeat:', error);
+        }
       }
     }, 30000);
   }

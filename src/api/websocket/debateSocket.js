@@ -118,10 +118,6 @@ class DebateSocketManager {
               });
             } else {
               this.currentStreamMessage += content;
-              this.handleMessage({
-                type: 'message_received',
-                data: { message: this.currentStreamMessage }
-              });
             }
           } else if (message.startsWith('connected:')) {
             const content = message.replace('connected:', '').trim();

@@ -3,7 +3,7 @@ const chatApi = {
     const url = `/api/chat/${chatId}/hint`;
     try {
       const response = await fetch(url, {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
