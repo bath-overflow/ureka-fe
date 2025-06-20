@@ -19,7 +19,7 @@ function Sidebar({ currentProjectId }) {
             <div className="sidebar-header">
                 <span
                     className="sidebar-home-link"
-                    onClick={() => navigate("/main")}
+                    onClick={() => navigate("/")}
                     tabIndex={0}
                     role="button"
                 >

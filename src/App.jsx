@@ -52,8 +52,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* 사이드바 없는 화면 */}
-        <Route path="/" element={<Login />} />
-        <Route path="/main" element={<MainScreen projects={projects} setProjects={setProjects} />} />
+        {/* <Route path="/" element={<Login />} /> */}
+        <Route path="/" element={<MainScreen projects={projects} setProjects={setProjects} />} />
         <Route path="/new-project" element={<NewProject projects={projects} setProjects={setProjects} />} />
 
         {/* 사이드바 포함된 화면 */}

@@ -75,7 +75,7 @@ function MainScreen({ projects, setProjects }) {
     <div className="main-bg">
       <div className="main-title">
         <div className="ureka-logo">UREKA</div>
-        <h1>홍길동님, UREKA에 오신 것을 환영해요!</h1>
+        <h1>UREKA에 오신 것을 환영해요!</h1>
       </div>
 
       <div className="project-list">
