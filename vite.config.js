@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 // Node의 내장 http-proxy 로깅을 활성화할 수 있게 핸들링
 export default defineConfig({
   plugins: [react()],
+  preview: {
+    allowedHosts: ['ureka-fe.cspc.me'],
+  },
   server: {
     proxy: {
       '/api': {

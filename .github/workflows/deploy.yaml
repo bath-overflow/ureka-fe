@@ -44,3 +44,11 @@ jobs:
           cache-from: type=registry,ref=${{ vars.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache
           annotations: ${{ steps.meta.outputs.annotations }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to server
+        run: |
+          curl -XPOST https://portainer.cspc.me/api/webhooks/45f90fb0-3bf0-498c-835d-c2c2318eb881
