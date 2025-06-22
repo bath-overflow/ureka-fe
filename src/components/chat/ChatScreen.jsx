@@ -22,16 +22,15 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
 
 
-  const { messages, sendMessage, sendHint, isLoading, error, isStreaming, chatId } = useChat(id);
+  const { messages, sendMessage, sendHint, isLoading, error, isStreaming } = useChat(id);
 
   const fetchedOnceRef = useRef(false);
 
   const fetchRecommendations = async () => {
-    if (!chatId) return;
 
     setIsLoadingRecommendations(true);
     try {
-      const data = await chatApi.getSuggestions(chatId); // ⬅️ 변경된 부분
+      const data = await chatApi.getSuggestions(id);
       console.log("[✅ 추천 질문 응답]", data);
 
       const raw = data?.suggested_questions ?? [];
@@ -61,10 +60,10 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
 
   // ✅ 메시지가 변경될 때마다 추천 질문 요청
   useEffect(() => {
-    if (chatId && messages.length > 0) {
+    if (id && messages.length > 0) {
       fetchRecommendations();
     }
-  }, [chatId, messages.length]);
+  }, [id, messages.length]);
 
 
 
@@ -275,8 +274,8 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
                 e.preventDefault();
                 handleHint();
               }}
-              disabled={isHintLoading || !chatId}
-              title={!chatId ? `채팅이 초기화되는 동안 기다려주세요... (chatId: ${chatId})` : ""}
+              disabled={isHintLoading || !id}
+              title={!id ? `채팅이 초기화되는 동안 기다려주세요... (id: ${id})` : ""}
             >
               {isHintLoading ? 'Loading...' : 'HINT'}
             </button>
@@ -318,7 +317,7 @@ function ChatScreen({ projects, setProjects, setCurrentProjectId }) {
       <InDepthDebateScreen
         isOpen={isDebateModalOpen}
         onClose={() => setIsDebateModalOpen(false)}
-        chatId={chatId}
+        chatId={id}
       />
     </div>
   );

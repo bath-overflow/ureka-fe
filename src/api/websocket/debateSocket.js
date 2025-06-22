@@ -98,7 +98,7 @@ class DebateSocketManager {
               data: { message: content }
             });
           } else if (message.startsWith('message_received:')) {
-            const content = message.replace('message_received:', '').trim();
+            const content = message.replace('message_received: ', '');
             this.handleMessage({
               type: 'message_received',
               data: { message: content }

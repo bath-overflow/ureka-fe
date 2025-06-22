@@ -6,16 +6,10 @@ export const useChat = (projectId) => {
     const [messages, setMessages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [chatId, setChatId] = useState(null);
     const [isStreaming, setIsStreaming] = useState(false);
     const [isLoadingHint, setIsLoadingHint] = useState(false);
 
     const { sendMessage: sendSocketMessage } = useChatSocket((message) => {
-        if (message.type === 'chat_id') {
-            setChatId(message.chat_id);
-            return;
-        }
-
         // 서버로부터 받은 메시지 처리
         if (message.type === 'message_received') {
             const content = message.data?.message;
@@ -165,11 +159,10 @@ export const useChat = (projectId) => {
     };
 
     const sendHint = async () => {
-        if (!chatId || isLoadingHint) return;
 
         try {
             setIsLoadingHint(true);
-            const hintData = await chatApi.getHint(chatId);
+            const hintData = await chatApi.getHint(projectId);
 
             // 힌트 메시지 추가
             const hintMsg = {
@@ -197,7 +190,6 @@ export const useChat = (projectId) => {
         sendHint,
         isLoading,
         error,
-        chatId,
         isStreaming,
         isLoadingHint
     };

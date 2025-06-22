@@ -107,7 +107,7 @@ class WebSocketManager {
             });
           } else if (message.startsWith('message_received:')) {
             // 메시지 수신 처리
-            const content = message.replace('message_received:', '').trim();
+            const content = message.replace('message_received: ', '');
             this.handleMessage({
               type: 'message_received',
               data: { message: content }
