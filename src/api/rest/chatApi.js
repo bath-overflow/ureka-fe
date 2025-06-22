@@ -44,6 +44,29 @@ const chatApi = {
       throw error;
     }
   },
+
+  async getHistory(chatId) {
+    const url = `/api/chat/${chatId}/history`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch chat history');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Chat history API Call failed:', error);
+      throw error;
+    }
+  },
 };
 
 export default chatApi;
