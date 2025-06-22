@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import wsManager from '../api/websocket/chatSocket';
 
-const useChatSocket = (onMessageReceived) => {
+const useChatSocket = (onMessageReceived, projectId) => {
   const messageQueue = useRef([]);
   const isComponentMounted = useRef(true);
   const currentStreamMessage = useRef('');
@@ -155,7 +155,7 @@ const useChatSocket = (onMessageReceived) => {
 
     // 연결이 없으면 연결 시도
     if (!wsManager.socket) {
-      wsManager.connect();
+      wsManager.connect(projectId);
     }
 
     return () => {
@@ -172,7 +172,7 @@ const useChatSocket = (onMessageReceived) => {
       messageQueue.current = [];
       currentStreamMessage.current = '';
     };
-  }, [handleMessage, handleError, handleDisconnect, handleConnect]);
+  }, [handleMessage, handleError, handleDisconnect, handleConnect, projectId]);
 
   return {
     joinChat,

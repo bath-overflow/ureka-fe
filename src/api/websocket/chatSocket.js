@@ -18,7 +18,7 @@ class WebSocketManager {
     this.isProcessingQueue = false;
   }
 
-  connect() {
+  connect(projectId) {
     if (this.isConnecting || this.forceClose) return;
     
     try {
@@ -34,7 +34,11 @@ class WebSocketManager {
         this.socket = null;
       }
 
-      this.socket = new WebSocket(this.url);
+      // projectId가 있으면 쿼리스트링에 추가
+      const url = projectId
+        ? `${API_BASE_URL}/ws/chat?chat_id=${projectId}`
+        : `${API_BASE_URL}/ws/chat`;
+      this.socket = new WebSocket(url);
 
       // 연결 타임아웃 설정
       this.connectionTimeout = setTimeout(() => {

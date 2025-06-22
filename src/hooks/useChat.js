@@ -81,7 +81,7 @@ export const useChat = (projectId) => {
             setError(message.data?.message);
             setIsStreaming(false);
         }
-    });
+    }, projectId);
 
     // 서버에서 채팅 기록 불러오기
     useEffect(() => {
